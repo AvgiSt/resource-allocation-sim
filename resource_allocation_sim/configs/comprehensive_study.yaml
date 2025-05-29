@@ -1,0 +1,80 @@
+# Comprehensive Study Configuration
+
+study_name: "comprehensive_resource_allocation_study"
+description: "Complete characterization of resource allocation system behavior"
+
+# Which analyses to run
+analyses:
+  weight_analysis: true
+  capacity_analysis: true
+  scaling_analysis: true
+  initial_condition_analysis: true
+  convergence_analysis: true
+
+# Base simulation parameters
+base_simulation:
+  num_iterations: 1000
+  num_episodes: 50
+  num_agents: 20
+  num_resources: 3
+  weight: 0.6
+  capacity: [1.0, 1.0, 1.0]
+
+# Weight analysis configuration
+weight_analysis:
+  weight_range: [0.1, 0.9]
+  num_steps: 9
+  focus_metrics: ["total_cost", "entropy", "convergence_time"]
+
+# Capacity analysis configuration
+capacity_analysis:
+  capacity_ranges:
+    symmetric: [[0.5, 0.5, 0.5], [1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]
+    asymmetric: [[0.5, 1.0, 1.5], [0.2, 0.8, 1.0], [1.0, 2.0, 0.5]]
+    extreme: [[0.1, 0.1, 2.8], [2.0, 0.5, 0.5], [0.0, 1.5, 1.5]]
+
+# Scaling analysis configuration
+scaling_analysis:
+  agent_counts: [5, 10, 20, 50, 100]
+  resource_counts: [3, 5, 7, 10]
+  max_iterations: 2000  # Larger systems may need more time
+
+# Initial condition analysis
+initial_condition_analysis:
+  conditions:
+    uniform: [0.333, 0.333, 0.334]
+    concentrated: [0.8, 0.1, 0.1]
+    bimodal: [0.45, 0.45, 0.1]
+    skewed: [0.6, 0.3, 0.1]
+  num_random_conditions: 10
+
+# Convergence analysis
+convergence_analysis:
+  criteria:
+    strict:
+      entropy_threshold: 0.01
+      cost_variance_threshold: 0.001
+      patience: 20
+    moderate:
+      entropy_threshold: 0.05
+      cost_variance_threshold: 0.01
+      patience: 50
+    lenient:
+      entropy_threshold: 0.1
+      cost_variance_threshold: 0.05
+      patience: 100
+
+# Output configuration
+output:
+  save_raw_data: true
+  generate_plots: true
+  plot_formats: ["png", "pdf"]
+  save_checkpoints: true
+  checkpoint_interval: 10
+
+# Performance settings
+performance:
+  parallel_processing: true
+  max_workers: 4
+  batch_size: 10
+  memory_limit: "8GB" 

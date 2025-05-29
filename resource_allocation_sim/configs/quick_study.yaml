@@ -1,0 +1,40 @@
+# Quick Study Configuration for Testing
+
+study_name: "quick_resource_allocation_test"
+description: "Fast test of resource allocation system"
+
+analyses:
+  weight_analysis: true
+  capacity_analysis: true
+  scaling_analysis: false
+  initial_condition_analysis: false
+  convergence_analysis: false
+
+base_simulation:
+  num_iterations: 100
+  num_episodes: 5
+  num_agents: 10
+  num_resources: 3
+  weight: 0.6
+  capacity: [1.0, 1.0, 1.0]
+
+weight_analysis:
+  weight_range: [0.3, 0.7]
+  num_steps: 3
+  focus_metrics: ["total_cost", "entropy"]
+
+capacity_analysis:
+  capacity_ranges:
+    symmetric: [[0.5, 0.5, 0.5], [1.0, 1.0, 1.0]]
+    asymmetric: [[0.5, 1.0, 1.5]]
+
+output:
+  save_raw_data: false
+  generate_plots: true
+  plot_formats: ["png"]
+  save_checkpoints: false
+
+performance:
+  parallel_processing: false
+  max_workers: 1
+  batch_size: 5 
