@@ -1047,4 +1047,4 @@ def compare_configurations(results_a, results_b, metric='entropy'):
 
 ---
 
-This comprehensive guide provides the theoretical foundation and practical tools needed to conduct rigorous research using the resource allocation simulation framework. For additional support, consult the main documentation or contact the development team. 
+This comprehensive guide provides the theoretical foundation and practical tools needed to conduct rigorous research using the resource allocation simulation framework. For additional support, consult the main documentation or contact me.
