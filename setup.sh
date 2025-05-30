@@ -4,7 +4,7 @@
 
 set -e  # Exit on any error
 
-echo "🚀 Setting up Resource Allocation Simulation Framework..."
+echo "Setting up Resource Allocation Simulation Framework..."
 
 # Parse command line arguments
 INSTALL_DEV=false
@@ -42,9 +42,9 @@ python_version=$(python3 -c "import sys; print('.'.join(map(str, sys.version_inf
 echo "Python version: $python_version"
 
 if python3 -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)"; then
-    echo "✅ Python version is compatible"
+    echo "Python version is compatible"
 else
-    echo "❌ Python 3.8+ required. Current version: $python_version"
+    echo "Python 3.8+ required. Current version: $python_version"
     exit 1
 fi
 
@@ -64,9 +64,9 @@ source venv/bin/activate
 
 # Verify virtual environment is active
 if [[ "$VIRTUAL_ENV" != "" ]]; then
-    echo "✅ Virtual environment activated: $VIRTUAL_ENV"
+    echo "Virtual environment activated: $VIRTUAL_ENV"
 else
-    echo "❌ Failed to activate virtual environment"
+    echo "Failed to activate virtual environment"
     exit 1
 fi
 
@@ -76,7 +76,7 @@ pip install --upgrade pip setuptools wheel
 
 # Install core dependencies explicitly first
 echo "Installing core dependencies..."
-pip install numpy>=1.20.0 matplotlib>=3.5.0 pandas>=1.3.0 click>=8.0.0 pyyaml>=6.0 seaborn>=0.11.0 scipy>=1.7.0
+pip install "numpy>=1.20.0" "matplotlib>=3.5.0" "pandas>=1.3.0" "click>=8.0.0" "pyyaml>=6.0" "seaborn>=0.11.0" "scipy>=1.7.0"
 
 # Install package in development mode
 echo "Installing package in development mode..."
@@ -86,28 +86,28 @@ pip install -e .
 echo "Verifying core package installation..."
 python3 -c "
 import resource_allocation_sim
-print(f'✅ Core package version: {resource_allocation_sim.__version__}')
-print(f'✅ Author: {resource_allocation_sim.__author__}')
+print(f'Core package version: {resource_allocation_sim.__version__}')
+print(f'Author: {resource_allocation_sim.__author__}')
 "
 
 # Install optional dependencies
 echo "Installing optional dependencies..."
 pip install -e ".[full]" || {
-    echo "⚠️  Some optional dependencies failed to install"
+    echo "Some optional dependencies failed to install"
     echo "Installing individual optional packages..."
     
     # Try installing optional dependencies individually
     echo "Installing networkx for network visualisations..."
-    pip install "networkx>=2.6" || echo "⚠️  networkx installation failed"
+    pip install "networkx>=2.6" || echo "networkx installation failed"
     
     echo "Installing plotly for interactive plots..."
-    pip install "plotly>=5.0.0" || echo "⚠️  plotly installation failed"
+    pip install "plotly>=5.0.0" || echo "lotly installation failed"
     
     echo "Installing jupyter and ipywidgets..."
-    pip install "jupyter>=1.0.0" "ipywidgets>=7.6.0" || echo "⚠️  jupyter installation failed"
+    pip install "jupyter>=1.0.0" "ipywidgets>=7.6.0" || echo "jupyter installation failed"
     
     echo "Installing mpltern for ternary plots..."
-    pip install "mpltern>=1.0.0" || echo "⚠️  mpltern installation failed (this is optional)"
+    pip install "mpltern>=1.0.0" || echo "mpltern installation failed (this is optional)"
 }
 
 # Install dev dependencies if requested
@@ -120,30 +120,30 @@ if [ "$INSTALL_DEV" = true ]; then
 fi
 
 # List installed packages
-echo "📦 Installed packages:"
+echo "Installed packages:"
 pip list | grep -E "(resource-allocation-sim|numpy|pandas|matplotlib|scipy|seaborn|click|pyyaml)"
 
 # Check for optional packages
 echo ""
-echo "🔍 Checking optional dependencies:"
+echo "Checking optional dependencies:"
 python3 -c "
 try:
     import networkx
-    print('✅ networkx available for network visualisations')
+    print('networkx available for network visualisations')
 except ImportError:
-    print('❌ networkx not available (network visualisations disabled)')
+    print('networkx not available (network visualisations disabled)')
 
 try:
     import mpltern
-    print('✅ mpltern available for ternary plots')
+    print('mpltern available for ternary plots')
 except ImportError:
-    print('❌ mpltern not available (ternary plots disabled)')
+    print('mpltern not available (ternary plots disabled)')
 
 try:
     import plotly
-    print('✅ plotly available for interactive plots')
+    print('plotly available for interactive plots')
 except ImportError:
-    print('❌ plotly not available (interactive plots disabled)')
+    print('plotly not available (interactive plots disabled)')
 "
 
 # Create a simple test if it doesn't exist
@@ -158,7 +158,7 @@ try:
     from resource_allocation_sim.core.simulation import SimulationRunner
     from resource_allocation_sim.utils.config import Config
     
-    print("✅ Import test passed!")
+    print("Import test passed!")
     
     # Run a minimal simulation with 2 resources
     config = Config()
@@ -171,48 +171,48 @@ try:
     runner.setup()
     results = runner.run()
     
-    print(f"✅ Simulation test passed! Final consumption: {results['final_consumption']}")
-    print("🎉 Installation successful!")
+    print(f"Simulation test passed! Final consumption: {results['final_consumption']}")
+    print("Installation successful!")
     
 except ImportError as e:
-    print(f"❌ Import failed: {e}")
+    print(f"Import failed: {e}")
     print("Check package structure and installation")
     exit(1)
 except Exception as e:
-    print(f"❌ Test failed: {e}")
+    print(f"Test failed: {e}")
     exit(1)
 EOF
 fi
 
 # Run simple test
 echo ""
-echo "🧪 Running installation verification test..."
+echo "Running installation verification test..."
 python3 run_simple_test.py
 
 # Run proper tests if requested and pytest is available
 if [ "$RUN_TESTS" = true ]; then
     if command -v pytest &> /dev/null; then
         echo ""
-        echo "🧪 Running pytest..."
+        echo "Running pytest..."
         pytest tests/ -v
     else
-        echo "⚠️  pytest not available. Install with: pip install -e \".[dev]\""
+        echo "Warning: pytest not available. Install with: pip install -e \".[dev]\""
     fi
 fi
 
 echo ""
-echo "✅ Setup complete!"
+echo "Setup complete!"
 echo ""
-echo "🎯 To use the framework:"
+echo "o use the framework:"
 echo "1. Activate the virtual environment: source venv/bin/activate"
 echo "2. Run CLI help: resource-sim --help"
 echo "3. Try a simple simulation: resource-sim run --agents 10 --resources 3"
 echo "4. Try a quick study: resource-sim study --config resource_allocation_sim/configs/quick_study.yaml"
 echo ""
 if [ "$INSTALL_DEV" = false ]; then
-    echo "🛠️  For development work:"
+    echo "For development work:"
     echo "- Install dev dependencies: ./setup.sh --dev"
     echo "- Run tests: pytest tests/ -v"
     echo ""
 fi
-echo "�� Happy simulating!" 
+echo "Happy simulating!" 
