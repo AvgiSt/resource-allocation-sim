@@ -1,13 +1,13 @@
 # Resource Allocation Simulation Framework - Analytical Guide
 
-A comprehensive guide to experiments, evaluations, and visualizations in the resource allocation simulation framework. This guide follows a workflow-focused approach for both end-users and researchers.
+A comprehensive guide to experiments, evaluations, and visualisations in the resource allocation simulation framework. This guide follows a workflow-focused approach for both end-users and researchers.
 
 ## Table of Contents
 
 1. [Framework Overview](#framework-overview)
 2. [Built-in Experiments](#built-in-experiments)
 3. [Evaluation Metrics & Theoretical Background](#evaluation-metrics--theoretical-background)
-4. [Visualization Capabilities](#visualization-capabilities)
+4. [Visualisation Capabilities](#visualisation-capabilities)
 5. [Research Workflow Examples](#research-workflow-examples)
 6. [Creating Custom Experiments](#creating-custom-experiments)
 7. [External Tool Integration](#external-tool-integration)
@@ -20,7 +20,7 @@ The framework provides a systematic approach to studying multi-agent resource al
 - **Probability-based learning agents** that adapt resource selection based on observed costs
 - **Configurable environments** with varying resource capacities and cost functions
 - **Comprehensive evaluation metrics** for system performance analysis
-- **Rich visualization tools** for understanding system dynamics
+- **Rich visualisation tools** for understanding system dynamics
 - **Extensible experiment framework** for systematic studies
 
 ### Core Components
@@ -30,7 +30,7 @@ resource_allocation_sim/
 ├── core/           # Agent, Environment, Simulation engine
 ├── experiments/    # Built-in experiment types
 ├── evaluation/     # Metrics and analysis tools
-├── visualization/  # Plotting and visualization
+├── visualisation/  # Plotting and visualisation
 ├── configs/        # Pre-configured experiment templates
 └── utils/          # Configuration and I/O utilities
 ```
@@ -105,7 +105,7 @@ experiment = ParameterSweepExperiment(
 
 ### 4. Capacity Analysis Experiment (`CapacityAnalysisExperiment`)
 
-**Purpose**: Study resource capacity effects on system behavior
+**Purpose**: Study resource capacity effects on system behaviour
 
 **Configuration**:
 ```python
@@ -121,13 +121,13 @@ experiment = CapacityAnalysisExperiment(
 ```
 
 **Outputs**:
-- Capacity utilization analysis
+- Capacity utilisation analysis
 - Load balancing effectiveness
 - System stability under different capacities
 
 ### 5. Comprehensive Study (`ComprehensiveStudy`)
 
-**Purpose**: Complete system characterization using configuration files
+**Purpose**: Complete system characterisation using configuration files
 
 **Using Configuration Files**:
 
@@ -160,7 +160,7 @@ analyses:
   capacity_analysis: true         # Resource capacity effects
   scaling_analysis: true          # System size effects
   initial_condition_analysis: true # Starting condition effects
-  convergence_analysis: true      # Convergence behavior
+  convergence_analysis: true      # Convergence behaviour
 ```
 
 **Running Configuration-Based Studies**:
@@ -187,16 +187,23 @@ study.generate_report(save_path='study_results/')
 ```python
 from resource_allocation_sim.evaluation import calculate_entropy
 
-entropy = calculate_entropy(consumption)
+# Normalise by capacity
+if capacity is not None:
+    normalised_consumption = consumption / capacity
+else:
+    normalised_consumption = consumption
+
+# Calculate entropy
+entropy = calculate_entropy(normalised_consumption)
 ```
 
 **Interpretation**:
-- **Low entropy (0-1)**: Concentrated resource usage, high specialization
+- **Low entropy (0-1)**: Concentrated resource usage, high specialisation
 - **Medium entropy (1-2)**: Balanced resource distribution
-- **High entropy (>2)**: Uniform resource usage, low specialization
+- **High entropy (>2)**: Uniform resource usage, low specialisation
 
 **Research Applications**:
-- Measuring system organization
+- Measuring system organisation
 - Detecting phase transitions
 - Comparing learning efficiency
 
@@ -223,25 +230,25 @@ gini = calculate_gini_coefficient(consumption)
 - Load balancing assessment
 - Social choice theory applications
 
-### 3. Resource Utilization Efficiency
+### 3. Resource Utilisation Efficiency
 
 **Theory**: Measures how effectively resources are used relative to capacity.
 
 **Implementation**:
 ```python
-from resource_allocation_sim.evaluation import calculate_resource_utilization
+from resource_allocation_sim.evaluation import calculate_resource_utilisation
 
 # Standard deviation (no capacity)
-efficiency = calculate_resource_utilization(consumption)
+efficiency = calculate_resource_utilisation(consumption)
 
-# Utilization rates (with capacity)
-utilization = calculate_resource_utilization(consumption, capacity)
+# Utilisation rates (with capacity)
+utilisation = calculate_resource_utilisation(consumption, capacity)
 ```
 
 **Interpretation**:
 - **Low std deviation**: Balanced resource usage
-- **High utilization rates**: Efficient capacity usage
-- **Utilization > 1**: Over-capacity usage (potential bottlenecks)
+- **High utilisation rates**: Efficient capacity usage
+- **Utilisation > 1**: Over-capacity usage (potential bottlenecks)
 
 ### 4. Convergence Speed
 
@@ -281,19 +288,19 @@ total_cost = calculate_total_cost(consumption, capacity)
 - **Exponential growth**: Capacity violations and penalties
 - **Optimal cost**: Balance between utilization and penalties
 
-## Visualization Capabilities
+## Visualisation Capabilities
 
 ### 1. Resource Distribution Plots (`plots.py`)
 
-**Purpose**: Visualize consumption vs capacity for each resource
+**Purpose**: Visualise consumption vs capacity for each resource
 
 ```python
-from resource_allocation_sim.visualization import plot_resource_distribution
+from resource_allocation_sim.visualisation import plot_resource_distribution
 
 fig = plot_resource_distribution(
-    consumption=results['final_consumption'],
-    capacity=config.capacity,
-    save_path='distribution.png'
+    consumption=[2.1, 1.8, 0.9],
+    capacity=[2.0, 2.0, 2.0],
+    save_path='resource_distribution.png'
 )
 ```
 
@@ -302,41 +309,45 @@ fig = plot_resource_distribution(
 **Interpretation**:
 - Bars above capacity lines indicate over-utilization
 - Uniform bar heights suggest balanced allocation
-- Large variations indicate specialization
+- Large variations indicate specialisation
 
 ### 2. Convergence Comparison Plots
 
 **Purpose**: Compare convergence across different configurations
 
 ```python
-from resource_allocation_sim.visualization import plot_convergence_comparison
+from resource_allocation_sim.visualisation import plot_convergence_comparison
 
 fig = plot_convergence_comparison(
-    results_dict={'Config A': results_a, 'Config B': results_b},
+    results_dict={
+        'config_1': [results_1],
+        'config_2': [results_2]
+    },
     metric='entropy',
-    save_path='convergence.png'
+    save_path='convergence_comparison.png'
 )
 ```
 
 **Output**: Multi-panel plot with time series, box plots, histograms, and statistics
 
 **Interpretation**:
-- Decreasing entropy indicates increasing organization
+- Decreasing entropy indicates increasing organisation
 - Box plot spread shows configuration robustness
 - Statistics table enables quantitative comparison
 
 ### 3. Parameter Sensitivity Plots
 
-**Purpose**: Visualize metric response to parameter changes
+**Purpose**: Visualise metric response to parameter changes
 
 ```python
-from resource_allocation_sim.visualization import plot_parameter_sensitivity
+from resource_allocation_sim.visualisation import plot_parameter_sensitivity
 
 fig = plot_parameter_sensitivity(
-    parameter_results=sweep_results,
+    parameter_values=[0.1, 0.3, 0.5, 0.7, 0.9],
+    metric_values=[0.8, 0.6, 0.4, 0.3, 0.2],
     parameter_name='weight',
-    metric_name='total_cost',
-    save_path='sensitivity.png'
+    metric_name='entropy',
+    save_path='parameter_sensitivity.png'
 )
 ```
 
@@ -349,32 +360,32 @@ fig = plot_parameter_sensitivity(
 
 ### 4. Ternary Diagrams (`ternary.py`)
 
-**Purpose**: Visualize 3-resource consumption evolution
+**Purpose**: Visualise 3-resource consumption evolution
 
 ```python
-from resource_allocation_sim.visualization import plot_ternary_distribution
+from resource_allocation_sim.visualisation import plot_ternary_distribution
 
 fig = plot_ternary_distribution(
-    consumption_history=results['consumption_history'],
-    save_path='ternary.png'
+    agent_results=results['agent_results'],
+    save_path='ternary_distribution.png'
 )
 ```
 
 **Output**: Triangular plot showing consumption trajectories
 
 **Interpretation**:
-- Corners represent single-resource specialization
+- Corners represent single-resource specialisation
 - Center represents balanced allocation
 - Trajectories show learning dynamics
 
-### 5. Network Visualizations (`network.py`)
+### 5. Network Visualisations (`network.py`)
 
-**Purpose**: Visualize agent state transitions and interactions
+**Purpose**: Visualise agent state transitions and interactions
 
 ```python
-from resource_allocation_sim.visualization import visualize_state_network
+from resource_allocation_sim.visualisation import visualise_state_network
 
-fig = visualize_state_network(
+fig = visualise_state_network(
     agent_history=results['agent_history'],
     save_path='network.png'
 )
@@ -385,7 +396,7 @@ fig = visualize_state_network(
 **Interpretation**:
 - Node size indicates state frequency
 - Edge thickness shows transition probability
-- Clusters reveal behavioral patterns
+- Clusters reveal behavioural patterns
 
 ## Research Workflow Examples
 
@@ -406,14 +417,14 @@ for config_name, config_results in results.items():
     print(f"{config_name}: Entropy={metrics['entropy']:.3f}, "
           f"Gini={metrics['gini_coefficient']:.3f}")
 
-# Step 3: Generate visualizations
+# Step 3: Generate visualisations
 study.generate_plots(save_dir='analysis_plots/')
 
 # Step 4: Create summary report
-study.generate_report(save_path='system_characterization_report.html')
+study.generate_report(save_path='system_characterisation_report.html')
 ```
 
-### Workflow 2: Parameter Optimization
+### Workflow 2: Parameter Optimisation
 
 ```python
 # Step 1: Parameter sweep
@@ -429,7 +440,7 @@ results = experiment.run()
 # Step 2: Find optimal parameters
 optimal_weight = experiment.find_optimal_parameter(
     metric='total_cost',
-    optimization='minimize'
+    optimisation='minimize'
 )
 
 # Step 3: Validate optimal parameters
@@ -437,7 +448,7 @@ validation_experiment = BaseExperiment(weight=optimal_weight)
 validation_results = validation_experiment.run()
 
 # Step 4: Statistical analysis
-experiment.statistical_analysis(save_path='optimization_analysis.csv')
+experiment.statistical_analysis(save_path='optimisation_analysis.csv')
 ```
 
 ### Workflow 3: Capacity Design Study
@@ -455,8 +466,8 @@ experiment = CapacityAnalysisExperiment(
 )
 results = experiment.run()
 
-# Step 2: Utilization analysis
-utilization_analysis = experiment.analyze_utilization()
+# Step 2: Utilisation analysis
+utilisation_analysis = experiment.analyze_utilisation()
 
 # Step 3: Cost-benefit analysis
 cost_benefit = experiment.cost_benefit_analysis()
@@ -532,26 +543,26 @@ class CustomConvergenceExperiment(BaseExperiment):
 from resource_allocation_sim.evaluation.metrics import calculate_entropy
 import numpy as np
 
-def calculate_specialization_index(consumption, capacity=None):
+def calculate_specialisation_index(consumption, capacity=None):
     """
-    Custom metric: Specialization Index
-    Measures how specialized the resource allocation is.
+    Custom metric: Specialisation Index
+    Measures how specialised the resource allocation is.
     """
     consumption = np.array(consumption)
     
     if capacity is not None:
-        # Normalize by capacity
+        # Normalise by capacity
         capacity = np.array(capacity)
-        normalized_consumption = consumption / capacity
+        normalised_consumption = consumption / capacity
     else:
-        normalized_consumption = consumption
+        normalised_consumption = consumption
     
-    # Calculate specialization as inverse of entropy
-    entropy = calculate_entropy(normalized_consumption)
+    # Calculate specialisation as inverse of entropy
+    entropy = calculate_entropy(normalised_consumption)
     max_entropy = np.log2(len(consumption))
     
-    specialization_index = 1 - (entropy / max_entropy)
-    return specialization_index
+    specialisation_index = 1 - (entropy / max_entropy)
+    return specialisation_index
 
 def calculate_stability_metric(consumption_history, window_size=10):
     """
@@ -580,16 +591,16 @@ def calculate_stability_metric(consumption_history, window_size=10):
     return np.mean(stabilities) if stabilities else 0.0
 ```
 
-### 3. Custom Visualization
+### 3. Custom Visualisation
 
 ```python
 import matplotlib.pyplot as plt
 import seaborn as sns
-from resource_allocation_sim.visualization.plots import plot_resource_distribution
+from resource_allocation_sim.visualisation.plots import plot_resource_distribution
 
 def plot_convergence_heatmap(results_dict, save_path=None):
     """
-    Custom visualization: Convergence Heatmap
+    Custom visualisation: Convergence Heatmap
     Shows convergence times across different parameter combinations.
     """
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -623,8 +634,8 @@ def plot_convergence_heatmap(results_dict, save_path=None):
 
 def plot_phase_diagram(parameter_results, x_param, y_param, metric, save_path=None):
     """
-    Custom visualization: Phase Diagram
-    Shows system behavior phases in parameter space.
+    Custom visualisation: Phase Diagram
+    Shows system behaviour phases in parameter space.
     """
     fig, ax = plt.subplots(figsize=(10, 8))
     
@@ -760,9 +771,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-def cluster_system_behaviors(results_dict, n_clusters=3):
+def cluster_system_behaviours(results_dict, n_clusters=3):
     """
-    Use scikit-learn to cluster different system behaviors.
+    Use scikit-learn to cluster different system behaviours.
     """
     # Prepare feature matrix
     features = []
@@ -788,7 +799,7 @@ def cluster_system_behaviors(results_dict, n_clusters=3):
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     cluster_labels = kmeans.fit_predict(features_scaled)
     
-    # Dimensionality reduction for visualization
+    # Dimensionality reduction for visualisation
     pca = PCA(n_components=2)
     features_2d = pca.fit_transform(features_scaled)
     
@@ -798,7 +809,7 @@ def cluster_system_behaviors(results_dict, n_clusters=3):
                          c=cluster_labels, cmap='viridis', alpha=0.7)
     plt.xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.2%} variance)')
     plt.ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.2%} variance)')
-    plt.title('System Behavior Clusters')
+    plt.title('System Behaviour Clusters')
     plt.colorbar(scatter)
     plt.show()
     
@@ -814,11 +825,11 @@ def cluster_system_behaviors(results_dict, n_clusters=3):
 
 ```python
 import networkx as nx
-from resource_allocation_sim.visualization.network import create_state_transition_graph
+from resource_allocation_sim.visualisation.network import create_state_transition_graph
 
 def analyze_system_topology(agent_results):
     """
-    Use NetworkX to analyze the topology of agent state transitions.
+    Use NetworkX to analyse the topology of agent state transitions.
     """
     # Create transition graph
     G = create_state_transition_graph(agent_results)
@@ -855,7 +866,7 @@ def analyze_system_topology(agent_results):
     }
 ```
 
-### 5. Plotly Integration for Interactive Visualizations
+### 5. Plotly Integration for Interactive Visualisations
 
 ```python
 import plotly.graph_objects as go
@@ -929,19 +940,19 @@ def create_interactive_dashboard(results_dict):
 ### 1. Entropy Analysis
 
 **Low Entropy (0-0.5)**:
-- **Interpretation**: High specialization, agents concentrate on few resources
+- **Interpretation**: High specialisation, agents concentrate on few resources
 - **Implications**: Efficient but potentially fragile system
-- **Research Questions**: What drives specialization? How robust is the system?
+- **Research Questions**: What drives specialisation? How robust is the system?
 
 **Medium Entropy (0.5-1.5)**:
-- **Interpretation**: Balanced resource usage with some specialization
+- **Interpretation**: Balanced resource usage with some specialisation
 - **Implications**: Good trade-off between efficiency and robustness
 - **Research Questions**: What maintains this balance? How stable is it?
 
 **High Entropy (>1.5)**:
-- **Interpretation**: Uniform resource usage, little specialization
+- **Interpretation**: Uniform resource usage, little specialisation
 - **Implications**: Robust but potentially inefficient
-- **Research Questions**: Why no specialization? Is this optimal?
+- **Research Questions**: Why no specialisation? Is this optimal?
 
 ### 2. Gini Coefficient Analysis
 
@@ -952,11 +963,11 @@ def create_interactive_dashboard(results_dict):
 
 **Medium Gini (0.3-0.7)**:
 - **Interpretation**: Moderate inequality
-- **Implications**: Some specialization while maintaining fairness
+- **Implications**: Some specialisation while maintaining fairness
 - **Research Context**: Optimal inequality studies
 
 **High Gini (0.7-1.0)**:
-- **Interpretation**: High inequality, strong specialization
+- **Interpretation**: High inequality, strong specialisation
 - **Implications**: Efficient but potentially unfair
 - **Research Context**: Efficiency vs. fairness trade-offs
 
@@ -964,17 +975,17 @@ def create_interactive_dashboard(results_dict):
 
 **Fast Convergence (<100 iterations)**:
 - **Possible Causes**: Strong learning signal, simple environment
-- **Implications**: Predictable system behavior
-- **Research Focus**: Learning efficiency, parameter optimization
+- **Implications**: Predictable system behaviour
+- **Research Focus**: Learning efficiency, parameter optimisation
 
 **Slow Convergence (100-500 iterations)**:
 - **Possible Causes**: Complex dynamics, weak learning signal
-- **Implications**: Rich system behavior, potential for multiple equilibria
+- **Implications**: Rich system behaviour, potential for multiple equilibria
 - **Research Focus**: System complexity, learning dynamics
 
 **No Convergence (>500 iterations)**:
 - **Possible Causes**: Chaotic dynamics, conflicting objectives
-- **Implications**: Complex system behavior, potential instability
+- **Implications**: Complex system behaviour, potential instability
 - **Research Focus**: Chaos theory, system stability
 
 ### 4. Cost Analysis
@@ -982,7 +993,7 @@ def create_interactive_dashboard(results_dict):
 **Linear Cost Growth**:
 - **Interpretation**: Efficient resource allocation within capacity
 - **Implications**: System operating optimally
-- **Research Focus**: Capacity planning, efficiency optimization
+- **Research Focus**: Capacity planning, efficiency optimisation
 
 **Exponential Cost Growth**:
 - **Interpretation**: Capacity violations, penalty accumulation
@@ -990,7 +1001,7 @@ def create_interactive_dashboard(results_dict):
 - **Research Focus**: Capacity design, penalty mechanisms
 
 **Oscillating Costs**:
-- **Interpretation**: Dynamic system behavior, potential cycles
+- **Interpretation**: Dynamic system behaviour, potential cycles
 - **Implications**: Complex system dynamics
 - **Research Focus**: Dynamical systems, stability analysis
 
@@ -1001,7 +1012,7 @@ def create_interactive_dashboard(results_dict):
 - **Research Context**: Egalitarian systems, social welfare
 
 **Low Entropy + High Gini**:
-- **System State**: Specialized, unequal allocation
+- **System State**: Specialised, unequal allocation
 - **Research Context**: Efficiency-focused systems, market dynamics
 
 **Medium Entropy + Medium Gini**:
@@ -1047,4 +1058,4 @@ def compare_configurations(results_a, results_b, metric='entropy'):
 
 ---
 
-This comprehensive guide provides the theoretical foundation and practical tools needed to conduct rigorous research using the resource allocation simulation framework. For additional support, consult the main documentation or contact me.
+This comprehensive guide provides the theoretical foundation and practical tools needed to conduct rigorous research using the resource allocation simulation framework. For additional support, consult the main documentation or contact me. 

@@ -51,7 +51,7 @@ def calculate_gini_coefficient(consumption: Union[List[float], np.ndarray]) -> f
     return (n + 1 - 2 * np.sum(cumsum) / cumsum[-1]) / n
 
 
-def calculate_resource_utilization(
+def calculate_resource_utilisation(
     consumption: Union[List[float], np.ndarray],
     capacity: Union[List[float], np.ndarray] = None
 ) -> Union[float, np.ndarray]:
@@ -170,7 +170,7 @@ def calculate_system_metrics(
     metrics = {
         'entropy': calculate_entropy(final_consumption),
         'gini_coefficient': calculate_gini_coefficient(final_consumption),
-        'resource_utilization_std': calculate_resource_utilization(final_consumption),
+        'resource_utilisation_std': calculate_resource_utilisation(final_consumption),
         'total_cost': total_cost,
         'mean_consumption': np.mean(final_consumption),
         'std_consumption': np.std(final_consumption),

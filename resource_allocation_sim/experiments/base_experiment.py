@@ -28,10 +28,10 @@ class BaseExperiment(ABC):
         experiment_name: Optional[str] = None
     ):
         """
-        Initialize base experiment.
+        Initialise base experiment.
         
         Args:
-            base_config: Base configuration for experiments
+            base_config: Base simulation configuration
             results_dir: Directory to save results
             experiment_name: Name of the experiment
         """

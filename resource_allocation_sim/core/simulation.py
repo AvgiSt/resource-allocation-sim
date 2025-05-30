@@ -24,7 +24,7 @@ class SimulationRunner:
         custom_agent_factory: Optional[Callable] = None
     ):
         """
-        Initialize simulation runner.
+        Initialise simulation runner.
         
         Args:
             config: Simulation configuration
@@ -59,17 +59,17 @@ class SimulationRunner:
                 agents.append(agent)
         else:
             # Use default agent creation
-            init_method = self.config.agent_initialization_method
+            init_method = self.config.agent_initialisation_method
             
             for i in range(self.config.num_agents):
                 if init_method == "uniform":
                     agent = Agent(i, self.config.num_resources, self.config.weight)
                 elif init_method == "dirichlet":
-                    agent = Agent.from_dirichlet(i, self.config.num_resources, self.config.weight)
+                    agent = Agent(i, self.config.num_resources, self.config.weight, "dirichlet")
                 elif init_method == "softmax":
-                    agent = Agent.from_softmax(i, self.config.num_resources, self.config.weight)
+                    agent = Agent(i, self.config.num_resources, self.config.weight, "softmax")
                 else:
-                    raise ValueError(f"Unknown initialization method: {init_method}")
+                    raise ValueError(f"Unknown initialisation method: {init_method}")
                     
                 agents.append(agent)
                 
@@ -85,7 +85,7 @@ class SimulationRunner:
         if not self.environment or not self.agents:
             self.setup()
             
-        # Initialize results storage
+        # Initialise results storage
         agent_results = {
             agent.id: {"prob": [], "action": []} 
             for agent in self.agents
@@ -93,14 +93,8 @@ class SimulationRunner:
         
         # Run simulation iterations
         for iteration in range(self.config.num_iterations):
-            # Handle first iteration (agents start with action 0)
-            if iteration == 0:
-                actions = [0] * len(self.agents)
-                for agent in self.agents:
-                    agent.action = 0
-            else:
-                # Agents select actions based on probabilities
-                actions = [agent.select_action() for agent in self.agents]
+            # Agents select actions based on probabilities
+            actions = [agent.select_action() for agent in self.agents]
             
             # Environment step
             costs = self.environment.step(actions)
@@ -108,13 +102,11 @@ class SimulationRunner:
             # Record agent states
             for agent in self.agents:
                 agent_results[agent.id]["prob"].append(agent.probabilities.copy())
-                agent_results[agent.id]["action"].append(agent.action)
+                agent_results[agent.id]["action"].append(actions[agent.id])
             
-            # Update agent probabilities
-            for agent, action in zip(self.agents, actions):
-                if iteration > 0:  # Don't update on first iteration
-                    observed_cost = costs[action]
-                    agent.update_probabilities(observed_cost)
+            # Update agent probabilities based on all costs
+            for agent in self.agents:
+                agent.update_probabilities(costs)
         
         # Compile results
         self.results = {
@@ -160,5 +152,5 @@ class SimulationRunner:
     def get_environment(self) -> Environment:
         """Get environment."""
         if self.environment is None:
-            raise ValueError("Environment not initialized. Call setup() first.")
+            raise ValueError("Environment not initialised. Call setup() first.")
         return self.environment 

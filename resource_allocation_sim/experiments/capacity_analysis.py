@@ -23,7 +23,7 @@ class CapacityAnalysisExperiment(BaseExperiment):
         **kwargs
     ):
         """
-        Initialize capacity analysis experiment.
+        Initialise capacity analysis experiment.
         
         Args:
             capacity_ranges: Dictionary mapping resource names to capacity ranges

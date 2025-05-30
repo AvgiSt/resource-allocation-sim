@@ -16,7 +16,7 @@ A comprehensive multi-agent simulation framework for studying resource allocatio
   - [Command Line Interface](#command-line-interface)
   - [Python API](#python-api)
   - [Running Experiments](#running-experiments)
-  - [Visualization Examples](#visualization-examples)
+  - [Visualisation Examples](#visualisation-examples)
 - [Configuration](#configuration)
 - [Performance Considerations](#performance-considerations)
 - [Known Issues & Solutions](#known-issues--solutions)
@@ -29,9 +29,9 @@ A comprehensive multi-agent simulation framework for studying resource allocatio
 This framework simulates resource allocation scenarios where autonomous agents learn to select resources based on observed costs. Key features include:
 
 - **Multi-agent learning**: Agents use probability-based learning to adapt resource selection
-- **Flexible resource modeling**: Configurable resource capacities and cost functions
+- **Flexible resource modelling**: Configurable resource capacities and cost functions
 - **Comprehensive analysis**: Built-in metrics for entropy, Gini coefficient, convergence analysis
-- **Extensive visualization**: 2D plots, ternary diagrams, network visualizations
+- **Extensive visualisation**: 2D plots, ternary diagrams, network visualisations
 - **Experiment framework**: Grid search, parameter sweeps, capacity analysis
 - **Scalable design**: Support for large-scale simulations with parallel processing
 
@@ -121,7 +121,7 @@ pip install -e ".[full]"
 
 ### Optional Dependencies
 - **mpltern** (≥1.0.0): Ternary diagrams (`pip install -e ".[ternary]"`)
-- **networkx** (≥2.6): Network visualizations (`pip install -e ".[network]"`)
+- **networkx** (≥2.6): Network visualisations (`pip install -e ".[network]"`)
 - **plotly** (≥5.0.0): Interactive plots (`pip install -e ".[full]"`)
 
 ## Quick Start
@@ -201,11 +201,11 @@ results = experiment.run()
 experiment.plot_results()
 ```
 
-### Visualization Examples
+### Visualisation Examples
 
 Resource distribution:
 ```python
-from resource_allocation_sim.visualization import plot_resource_distribution
+from resource_allocation_sim.visualisation import plot_resource_distribution
 
 # After running simulation
 plot_resource_distribution(
@@ -217,7 +217,7 @@ plot_resource_distribution(
 
 Ternary diagram (requires mpltern):
 ```python
-from resource_allocation_sim.visualization import plot_ternary_distribution
+from resource_allocation_sim.visualisation import plot_ternary_distribution
 
 # For 3-resource scenarios
 plot_ternary_distribution(
@@ -226,12 +226,12 @@ plot_ternary_distribution(
 )
 ```
 
-Network visualization (requires networkx):
+Network visualisation (requires networkx):
 ```python
-from resource_allocation_sim.visualization import visualize_state_network
+from resource_allocation_sim.visualisation import visualise_state_network
 
-# Visualize agent state transitions
-visualize_state_network(
+# Visualise agent state transitions
+visualise_state_network(
     agent_history=results['agent_history'],
     save_path='network.png'
 )
@@ -251,8 +251,8 @@ weight: 0.65
 
 capacity: [1.2, 0.8, 1.5, 1.0]
 
-# Agent initialization
-agent_initialization_method: "dirichlet"  # uniform, dirichlet, softmax
+# Agent initialisation
+agent_initialisation_method: "dirichlet"  # uniform, dirichlet, softmax
 
 # Experiment settings
 num_episodes: 10
@@ -278,7 +278,7 @@ config = Config()
 
 # Learning parameters
 config.weight = 0.6                    # Learning weight (0-1)
-config.agent_initialization_method = "uniform"  # How to initialize agent probabilities
+config.agent_initialisation_method = "uniform"  # How to initialise agent probabilities
 
 # Environment parameters
 config.capacity = [1.0, 1.5, 0.8]     # Resource capacities
@@ -308,7 +308,7 @@ config.batch_size = 100               # Batch size for large simulations
 - **Time complexity**: O(agents × iterations × resources)
 - **Space complexity**: O(agents × resources + iterations) for history storage
 
-### Optimization Tips
+### Optimisation Tips
 
 ```python
 # For large-scale simulations
@@ -370,7 +370,7 @@ config.weight = 0.8  # Increase learning rate
 config.convergence_threshold = 0.01  # Relax convergence criteria
 ```
 
-**Issue**: Visualization errors
+**Issue**: Visualisation errors
 ```bash
 # Solution: Install optional dependencies
 pip install -e ".[full]"
@@ -380,7 +380,7 @@ pip install -e ".[full]"
 
 **Issue**: Simulation runs slowly
 ```python
-# Solution: Enable optimizations
+# Solution: Enable optimisations
 config.parallel_processing = True
 config.use_numba = True  # If available
 config.batch_processing = True
@@ -482,7 +482,7 @@ pytest tests/ --cov=resource_allocation_sim --cov-report=html
 # Run specific test categories
 pytest tests/test_core.py -v
 pytest tests/test_experiments.py -v
-pytest tests/test_visualization.py -v
+pytest tests/test_visualisation.py -v
 ```
 
 ### Adding New Features

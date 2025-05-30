@@ -234,8 +234,16 @@ def sweep(param_name, param_values, episodes, config, output, name):
 def capacity(capacity_configs, episodes, config, output, name):
     """Run capacity analysis experiment."""
     try:
-        import json
-        capacity_ranges = json.loads(capacity_configs)
+        # Parse capacity configurations
+        if capacity_configs:
+            capacity_scenarios = json.loads(capacity_configs)
+        else:
+            # Default capacity scenarios
+            capacity_scenarios = {
+                'symmetric': [[0.5, 0.5, 0.5], [1.0, 1.0, 1.0], [2.0, 2.0, 2.0]],
+                'asymmetric': [[0.5, 1.0, 1.5], [0.2, 0.8, 1.0]],
+                'extreme': [[0.1, 0.1, 2.8], [2.0, 0.5, 0.5]]
+            }
         
         # Load base config
         if config:
@@ -245,7 +253,7 @@ def capacity(capacity_configs, episodes, config, output, name):
         
         # Create experiment
         experiment = CapacityAnalysisExperiment(
-            capacity_ranges=capacity_ranges,
+            capacity_scenarios=capacity_scenarios,
             base_config=base_config,
             results_dir=output,
             experiment_name=name
@@ -269,23 +277,43 @@ def capacity(capacity_configs, episodes, config, output, name):
 @click.option('--network', is_flag=True, help='Generate network plots')
 @click.option('--ternary', is_flag=True, help='Generate ternary plots')
 @click.option('--report', is_flag=True, help='Generate comprehensive report')
-def analyze(results_path, output, agents, network, ternary, report):
-    """Analyze simulation results."""
+def analyse(results_path, output, agents, network, ternary, report):
+    """Analyse simulation results."""
     try:
-        from .scripts.analyze_results import analyze_results_file
+        from .evaluation.system_analysis import SystemAnalysis
+        from .evaluation.agent_analysis import AgentAnalysis
+        from .visualisation.plots import generate_analysis_plots
         
-        results_path = Path(results_path)
+        # Load results
+        results = load_results(results_path)
+        
+        # Create output directory
         output_dir = ensure_directory(output)
         
-        # Load and analyze results
-        analyze_results_file(
-            results_path=results_path,
-            output_dir=output_dir,
-            include_agents=agents,
-            include_network=network,
-            include_ternary=ternary,
-            generate_report=report
-        )
+        # System analysis
+        system_analysis = SystemAnalysis(results)
+        system_metrics = system_analysis.calculate_all_metrics()
+        
+        click.echo("System Analysis:")
+        for metric, value in system_metrics.items():
+            click.echo(f"  {metric}: {value:.4f}")
+        
+        # Agent analysis (if requested)
+        if agents:
+            agent_analysis = AgentAnalysis(results)
+            agent_metrics = agent_analysis.calculate_all_metrics()
+            click.echo("\nAgent Analysis completed")
+        
+        # Generate visualisations
+        generate_analysis_plots(results, output_dir, 
+                              include_network=network, 
+                              include_ternary=ternary)
+        
+        # Generate report (if requested)
+        if report:
+            from .utils.reporting import generate_comprehensive_report
+            generate_comprehensive_report(results, output_dir)
+            click.echo(f"Comprehensive report generated in: {output_dir}")
         
         click.echo(f"Analysis completed! Results saved to: {output_dir}")
         
@@ -299,29 +327,25 @@ def analyze(results_path, output, agents, network, ternary, report):
 @click.option('--resources', '-r', default=3, help='Number of resources')
 @click.option('--capacity', '-cap', multiple=True, type=float,
               default=[1.0, 1.0, 1.0], help='Resource capacities')
-@click.option('--output', '-o', default='visualization_output',
+@click.option('--output', '-o', default='visualisation_output',
               help='Output directory')
-def visualize(agents, resources, capacity, output):
-    """Generate visualization examples."""
+def visualise(agents, resources, capacity, output):
+    """Generate sample visualisations."""
     try:
-        from .visualization.plots import plot_resource_distribution
-        from .visualization.ternary import plot_ternary_distribution
-        from .visualization.network import visualize_state_network
-        import numpy as np
-        import matplotlib.pyplot as plt
+        from .visualisation.plots import create_sample_plots
         
-        # Create sample data
-        consumption = np.random.multinomial(agents, [1/resources]*resources, size=1)[0]
+        # Create output directory
+        output_dir = ensure_directory(output)
         
-        output_dir = Path(output)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        # Generate sample plots
+        create_sample_plots(
+            num_agents=agents,
+            num_resources=resources,
+            capacity=list(capacity),
+            output_dir=output_dir
+        )
         
-        # Resource distribution plot
-        fig = plot_resource_distribution(consumption, capacity)
-        fig.savefig(output_dir / 'resource_distribution.png', dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        click.echo(f"Visualizations saved to: {output_dir}")
+        click.echo(f"Sample visualisations generated in: {output_dir}")
         
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -330,20 +354,57 @@ def visualize(agents, resources, capacity, output):
 
 @cli.command()
 def info():
-    """Show system information and available commands."""
-    click.echo("Resource Allocation Simulation Framework")
-    click.echo("=" * 50)
-    click.echo()
-    click.echo("Available commands:")
-    click.echo("  run        - Run single simulation")
-    click.echo("  study      - Run comprehensive study")
-    click.echo("  experiment - Run specific experiment type")
-    click.echo("  analyze    - Analyze results")
-    click.echo("  visualize  - Generate visualizations")
-    click.echo("  info       - Show this information")
-    click.echo()
-    click.echo("For help on specific commands, use: command --help")
-    click.echo("Example: resource-sim run --help")
+    """Display system information and available features."""
+    try:
+        import numpy as np
+        import matplotlib
+        import pandas as pd
+        import seaborn as sns
+        
+        click.echo("Resource Allocation Simulation Framework")
+        click.echo("=" * 45)
+        click.echo(f"Python version: {sys.version.split()[0]}")
+        click.echo(f"NumPy version: {np.__version__}")
+        click.echo(f"Matplotlib version: {matplotlib.__version__}")
+        click.echo(f"Pandas version: {pd.__version__}")
+        click.echo(f"Seaborn version: {sns.__version__}")
+        
+        # Check optional dependencies
+        optional_deps = []
+        
+        try:
+            import mpltern
+            optional_deps.append(f"mpltern: {mpltern.__version__} (ternary plots)")
+        except ImportError:
+            optional_deps.append("mpltern: Not installed (ternary plots unavailable)")
+        
+        try:
+            import networkx as nx
+            optional_deps.append(f"networkx: {nx.__version__} (network visualisations)")
+        except ImportError:
+            optional_deps.append("networkx: Not installed (network visualisations unavailable)")
+        
+        try:
+            import plotly
+            optional_deps.append(f"plotly: {plotly.__version__} (interactive plots)")
+        except ImportError:
+            optional_deps.append("plotly: Not installed (interactive plots unavailable)")
+        
+        click.echo("\nOptional Dependencies:")
+        for dep in optional_deps:
+            click.echo(f"  {dep}")
+        
+        click.echo("\nAvailable Commands:")
+        click.echo("  run        - Run single simulation")
+        click.echo("  study      - Run comprehensive study")
+        click.echo("  experiment - Run specific experiment types")
+        click.echo("  analyse    - Analyse simulation results")
+        click.echo("  visualise  - Generate sample visualisations")
+        click.echo("  info       - Display this information")
+        
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

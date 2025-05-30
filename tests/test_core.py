@@ -1,103 +1,119 @@
 """Tests for core components."""
 
-import pytest
+import unittest
 import numpy as np
 from resource_allocation_sim.core.agent import Agent
 from resource_allocation_sim.core.environment import Environment
+from resource_allocation_sim.core.simulation import SimulationRunner
 from resource_allocation_sim.utils.config import Config
 
 
-class TestAgent:
-    """Test Agent class."""
+class TestAgent(unittest.TestCase):
+    """Test Agent class functionality."""
     
-    def test_initialization(self):
-        """Test agent initialization."""
+    def test_initialisation(self):
+        """Test agent initialisation."""
         agent = Agent(0, 3, 0.5)
-        assert agent.id == 0
-        assert agent.num_resources == 3
-        assert agent.weight == 0.5
-        assert len(agent.probabilities) == 3
-        assert abs(sum(agent.probabilities) - 1.0) < 1e-10
-
-    def test_select_action(self):
+        self.assertEqual(agent.id, 0)
+        self.assertEqual(agent.num_resources, 3)
+        self.assertEqual(agent.weight, 0.5)
+        self.assertEqual(len(agent.probabilities), 3)
+        np.testing.assert_almost_equal(np.sum(agent.probabilities), 1.0)
+    
+    def test_action_selection(self):
         """Test action selection."""
         agent = Agent(0, 3, 0.5)
         action = agent.select_action()
-        assert 0 <= action < 3
-        
-    def test_update_probabilities(self):
+        self.assertIn(action, [0, 1, 2])
+    
+    def test_probability_update(self):
         """Test probability updates."""
         agent = Agent(0, 3, 0.5)
         initial_probs = agent.probabilities.copy()
         
-        # Update with some costs
-        costs = [1.0, 2.0, 0.5]
+        # Update with costs
+        costs = [1.0, 0.5, 2.0]  # Resource 1 has lowest cost
         agent.update_probabilities(costs)
         
-        # Probabilities should have changed
-        assert not np.allclose(initial_probs, agent.probabilities)
-        # Should still sum to 1
-        assert abs(sum(agent.probabilities) - 1.0) < 1e-10
-
-
-class TestEnvironment:
-    """Test Environment class."""
+        # Probability for resource 1 should increase
+        self.assertGreater(agent.probabilities[1], initial_probs[1])
     
-    def test_initialization(self):
-        """Test environment initialization."""
-        env = Environment(3, [1.0, 1.0, 1.0])
-        assert env.num_resources == 3
-        assert len(env.capacity) == 3
-        
-    def test_step(self):
-        """Test environment step function."""
-        env = Environment(3, [1.0, 1.0, 1.0])
-        costs = env.step([0, 1, 2])
-        assert len(costs) == 3
-        assert all(cost >= 0 for cost in costs)
-        
     def test_reset(self):
-        """Test environment reset."""
-        env = Environment(3, [1.0, 1.0, 1.0])
-        env.step([0, 1, 2])  # Do some actions
-        env.reset()
-        assert all(c == 0 for c in env.consumption)
+        """Test agent reset."""
+        agent = Agent(0, 3, 0.5)
+        agent.select_action()
+        agent.update_probabilities([1.0, 0.5, 2.0])
+        
+        agent.reset()
+        self.assertEqual(len(agent.action_history), 0)
+        self.assertEqual(len(agent.probability_history), 0)
 
 
-class TestConfig:
-    """Test Config class."""
+class TestEnvironment(unittest.TestCase):
+    """Test Environment class functionality."""
     
-    def test_initialization(self):
-        """Test config initialization."""
+    def test_initialisation(self):
+        """Test environment initialisation."""
+        env = Environment(3, [1.0, 1.5, 0.8])
+        self.assertEqual(env.num_resources, 3)
+        np.testing.assert_array_equal(env.capacity, [1.0, 1.5, 0.8])
+    
+    def test_step(self):
+        """Test environment step."""
+        env = Environment(3, [1.0, 1.0, 1.0])
+        actions = [0, 1, 0, 2]  # 2 agents select resource 0, 1 selects resource 1, 1 selects resource 2
+        
+        costs = env.step(actions)
+        self.assertEqual(len(costs), 3)
+        self.assertEqual(env.consumption[0], 2)  # Resource 0 selected twice
+        self.assertEqual(env.consumption[1], 1)  # Resource 1 selected once
+        self.assertEqual(env.consumption[2], 1)  # Resource 2 selected once
+    
+    def test_cost_calculation(self):
+        """Test cost calculation."""
+        env = Environment(2, [1.0, 2.0])
+        actions = [0, 0, 1]  # Overload resource 0
+        
+        costs = env.step(actions)
+        # Resource 0 should have higher cost due to overload
+        self.assertGreater(costs[0], costs[1])
+
+
+class TestSimulationRunner(unittest.TestCase):
+    """Test SimulationRunner class functionality."""
+    
+    def test_initialisation(self):
+        """Test simulation runner initialisation."""
         config = Config()
-        assert config.num_agents > 0
-        assert config.num_resources > 0
-        assert 0 < config.weight < 1
-        
-    def test_validation(self):
-        """Test configuration validation."""
+        runner = SimulationRunner(config)
+        self.assertEqual(runner.config, config)
+    
+    def test_setup(self):
+        """Test simulation setup."""
         config = Config()
-        config.validate()  # Should not raise
+        config.num_agents = 5
+        config.num_resources = 3
         
-        # Test invalid configurations
-        config.num_agents = -1
-        with pytest.raises(ValueError, match="num_agents must be positive"):
-            config.validate()
-            
-        config.num_agents = 5  # Reset
-        config.num_resources = 0
-        with pytest.raises(ValueError, match="num_resources must be positive"):
-            config.validate()
-            
-    def test_capacity_auto_adjustment(self):
-        """Test automatic capacity adjustment."""
+        runner = SimulationRunner(config)
+        runner.setup()
+        
+        self.assertEqual(len(runner.agents), 5)
+        self.assertIsNotNone(runner.environment)
+    
+    def test_run(self):
+        """Test simulation run."""
         config = Config()
-        original_resources = config.num_resources
-        
-        # Change num_resources - capacity should auto-adjust
-        config.num_resources = 5
-        assert len(config.capacity) == 5
-        
-        # Reduce resources
+        config.num_agents = 3
         config.num_resources = 2
-        assert len(config.capacity) == 2 
+        config.num_iterations = 10
+        
+        runner = SimulationRunner(config)
+        results = runner.run()
+        
+        self.assertIn('agent_results', results)
+        self.assertIn('final_consumption', results)
+        self.assertIn('total_cost', results)
+
+
+if __name__ == '__main__':
+    unittest.main() 

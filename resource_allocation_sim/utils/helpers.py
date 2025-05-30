@@ -20,48 +20,56 @@ def ensure_directory(path: Union[str, Path]) -> Path:
     return path
 
 
-def normalize_probabilities(probs: np.ndarray) -> np.ndarray:
+def normalise_probabilities(probs: np.ndarray) -> np.ndarray:
     """
-    Normalize probability array to sum to 1.
+    Normalise probability array to sum to 1.
     
     Args:
-        probs: Probability array
+        probs: Input probability array
         
     Returns:
-        Normalized probability array
+        Normalised probability array
     """
-    probs = np.array(probs, dtype=float)
-    probs = np.maximum(probs, 1e-10)  # Avoid zeros
-    return probs / np.sum(probs)
+    probs = np.array(probs)
+    total = np.sum(probs)
+    
+    if total == 0:
+        # If all probabilities are zero, return uniform distribution
+        return np.ones_like(probs) / len(probs)
+    
+    return probs / total
 
 
-def calculate_distance_to_capacity(
-    distribution: np.ndarray, 
-    capacity: np.ndarray, 
+def calculate_distribution_distance(
+    distribution: Union[List[float], np.ndarray],
+    capacity: Union[List[float], np.ndarray],
     num_agents: int
 ) -> float:
     """
-    Calculate distance from current distribution to capacity-proportional distribution.
+    Calculate distance between current distribution and ideal distribution.
     
     Args:
-        distribution: Current resource distribution
+        distribution: Current resource consumption distribution
         capacity: Resource capacities
         num_agents: Total number of agents
         
     Returns:
-        Euclidean distance to optimal distribution
+        Distance metric (lower is better)
     """
-    # Normalize current distribution
-    normalized_dist = distribution / num_agents
+    distribution = np.array(distribution)
+    capacity = np.array(capacity)
     
-    # Calculate target distribution (proportional to capacity)
+    # Normalise current distribution
+    normalised_dist = distribution / num_agents
+    
+    # Calculate ideal distribution (proportional to capacity)
     if np.sum(capacity) > 0:
-        normalized_cap = capacity / np.sum(capacity)
+        normalised_cap = capacity / np.sum(capacity)
     else:
-        normalized_cap = np.ones_like(capacity) / len(capacity)
+        normalised_cap = np.ones_like(capacity) / len(capacity)
     
-    # Calculate Euclidean distance
-    return np.linalg.norm(normalized_dist - normalized_cap)
+    # Return L2 distance
+    return np.linalg.norm(normalised_dist - normalised_cap)
 
 
 def generate_parameter_grid(**param_ranges) -> List[dict]:

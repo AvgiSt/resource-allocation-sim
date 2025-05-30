@@ -22,11 +22,13 @@ class GridSearchExperiment(BaseExperiment):
         **kwargs
     ):
         """
-        Initialize grid search experiment.
+        Initialise grid search experiment.
         
         Args:
-            parameter_grid: Dictionary mapping parameter names to value lists
-            **kwargs: Arguments passed to BaseExperiment
+            parameter_grid: Dictionary of parameter names to lists of values
+            base_config: Base configuration
+            results_dir: Directory to save results
+            experiment_name: Optional experiment name
         """
         super().__init__(**kwargs)
         self.parameter_grid = parameter_grid

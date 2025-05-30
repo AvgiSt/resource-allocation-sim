@@ -15,7 +15,7 @@ class Config:
     
     def __init__(self, config_path: Optional[Union[str, Path]] = None, **kwargs):
         """
-        Initialize configuration.
+        Initialise configuration.
         
         Args:
             config_path: Path to YAML configuration file
@@ -44,7 +44,7 @@ class Config:
         self.capacity = [1.0, 1.0, 1.0]  # Equal capacity by default
         
         # Agent parameters
-        self.agent_initialization_method = "uniform"  # uniform, dirichlet, softmax
+        self.agent_initialisation_method = "uniform"  # uniform, dirichlet, softmax
         
         # Experiment parameters
         self.num_episodes = 1

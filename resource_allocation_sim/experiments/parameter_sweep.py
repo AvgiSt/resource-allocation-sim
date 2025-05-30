@@ -20,7 +20,7 @@ class ParameterSweepExperiment(BaseExperiment):
         **kwargs
     ):
         """
-        Initialize parameter sweep experiment.
+        Initialise parameter sweep experiment.
         
         Args:
             parameter_name: Name of parameter to sweep

@@ -1,9 +1,9 @@
-"""Evaluation tools for analyzing simulation results."""
+"""Evaluation tools for analysing simulation results."""
 
 from .metrics import (
     calculate_entropy,
     calculate_gini_coefficient,
-    calculate_resource_utilization,
+    calculate_resource_utilisation,
     calculate_convergence_speed,
     calculate_total_cost
 )
@@ -21,7 +21,7 @@ from .system_analysis import (
 __all__ = [
     "calculate_entropy",
     "calculate_gini_coefficient", 
-    "calculate_resource_utilization",
+    "calculate_resource_utilisation",
     "calculate_convergence_speed",
     "calculate_total_cost",
     "analyze_agent_convergence",

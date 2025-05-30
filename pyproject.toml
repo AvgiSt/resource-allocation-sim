@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-keywords = ["simulation", "multi-agent", "resource-allocation", "optimization"]
+keywords = ["simulation", "multi-agent", "resource-allocation", "optimisation"]
 authors = [
     {name = "Your Name", email = "your.email@example.com"},
 ]

@@ -30,15 +30,15 @@ class ComprehensiveStudy:
         base_config: Config,
         results_dir: str = "results/comprehensive_studies"
     ):
-        """Initialize comprehensive study."""
+        """Initialise comprehensive study."""
         self.study_config = study_config
         self.base_config = base_config
         
         # Create study directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        study_name = study_config.get('study_name', 'comprehensive_study')
-        self.experiment_dir = Path(results_dir) / f"{study_name}_{timestamp}"
-        self.experiment_dir.mkdir(parents=True, exist_ok=True)
+        self.study_name = study_config.get('study_name', 'comprehensive_study')
+        self.results_dir = Path(results_dir) / f"{self.study_name}_{timestamp}"
+        self.results_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize storage
         self.study_results: Dict[str, Any] = {}
@@ -52,7 +52,7 @@ class ComprehensiveStudy:
     
     def _setup_logging(self):
         """Setup logging for the study."""
-        log_file = self.experiment_dir / 'study.log'
+        log_file = self.results_dir / 'study.log'
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
@@ -121,7 +121,7 @@ class ComprehensiveStudy:
             parameter_name='weight',
             parameter_values=weight_values.tolist(),
             base_config=self.base_config,
-            results_dir=self.experiment_dir / 'weight_analysis',
+            results_dir=self.results_dir / 'weight_analysis',
             experiment_name='weight_sweep'
         )
         
@@ -150,7 +150,7 @@ class ComprehensiveStudy:
         experiment = CapacityAnalysisExperiment(
             capacity_ranges={'capacity': all_capacities},
             base_config=self.base_config,
-            results_dir=self.experiment_dir / 'capacity_analysis',
+            results_dir=self.results_dir / 'capacity_analysis',
             experiment_name='capacity_study'
         )
         
@@ -180,7 +180,7 @@ class ComprehensiveStudy:
                 parameter_name='num_agents',
                 parameter_values=[num_agents],
                 base_config=self.base_config,
-                results_dir=self.experiment_dir / 'scaling_analysis' / f'agents_{num_agents}',
+                results_dir=self.results_dir / 'scaling_analysis' / f'agents_{num_agents}',
                 experiment_name=f'agent_scaling_{num_agents}'
             )
             
@@ -199,7 +199,7 @@ class ComprehensiveStudy:
                 parameter_name='num_resources',
                 parameter_values=[num_resources],
                 base_config=modified_config,
-                results_dir=self.experiment_dir / 'scaling_analysis' / f'resources_{num_resources}',
+                results_dir=self.results_dir / 'scaling_analysis' / f'resources_{num_resources}',
                 experiment_name=f'resource_scaling_{num_resources}'
             )
             
@@ -235,7 +235,7 @@ class ComprehensiveStudy:
                 parameter_name='num_iterations',
                 parameter_values=[iterations],
                 base_config=modified_config,
-                results_dir=self.experiment_dir / 'convergence_analysis' / f'iter_{iterations}',
+                results_dir=self.results_dir / 'convergence_analysis' / f'iter_{iterations}',
                 experiment_name=f'convergence_{iterations}'
             )
             
@@ -323,7 +323,7 @@ class ComprehensiveStudy:
         
         # Save report
         report_content = "\n".join(report_sections)
-        report_path = self.experiment_dir / 'comprehensive_report.txt'
+        report_path = self.results_dir / 'comprehensive_report.txt'
         with open(report_path, 'w') as f:
             f.write(report_content)
         
@@ -340,20 +340,20 @@ class ComprehensiveStudy:
             },
             'comprehensive_study_results',
             'pickle',
-            self.experiment_dir
+            self.results_dir
         )
         
         # Save metadata
-        with open(self.experiment_dir / 'metadata.json', 'w') as f:
+        with open(self.results_dir / 'metadata.json', 'w') as f:
             json.dump(self.metadata, f, indent=2)
         
         # Save study config
-        with open(self.experiment_dir / 'study_config.json', 'w') as f:
+        with open(self.results_dir / 'study_config.json', 'w') as f:
             json.dump(self.study_config, f, indent=2)
     
     def get_results_dir(self) -> Path:
         """Get study results directory."""
-        return self.experiment_dir
+        return self.results_dir
     
     def analyze_cross_experiment_correlations(self) -> Dict[str, Any]:
         """Analyze correlations across different experiments."""
