@@ -40,8 +40,8 @@ class Config:
         self.num_resources = 3
         self.weight = 0.6
         
-        # Environment parameters
-        self.capacity = [1.0, 1.0, 1.0]  # Equal capacity by default
+        # Environment parameters - now using relative capacity (fraction of agents)
+        self.relative_capacity = [0.5, 0.5, 0.5]  # 50% of agents can use each resource
         
         # Agent parameters
         self.agent_initialisation_method = "uniform"  # uniform, dirichlet, softmax
@@ -97,17 +97,17 @@ class Config:
         for key, value in kwargs.items():
             setattr(self, key, value)
         
-        # Auto-adjust capacity if num_resources changes
-        if 'num_resources' in kwargs and hasattr(self, 'capacity'):
-            if len(self.capacity) != self.num_resources:
-                # Resize capacity array to match num_resources
-                if len(self.capacity) > self.num_resources:
-                    self.capacity = self.capacity[:self.num_resources]
+        # Auto-adjust relative_capacity if num_resources changes
+        if 'num_resources' in kwargs and hasattr(self, 'relative_capacity'):
+            if len(self.relative_capacity) != self.num_resources:
+                # Resize relative_capacity array to match num_resources
+                if len(self.relative_capacity) > self.num_resources:
+                    self.relative_capacity = self.relative_capacity[:self.num_resources]
                 else:
-                    # Extend with the last capacity value or 1.0
-                    last_cap = self.capacity[-1] if self.capacity else 1.0
-                    while len(self.capacity) < self.num_resources:
-                        self.capacity.append(last_cap)
+                    # Extend with the last relative_capacity value or 0.5
+                    last_cap = self.relative_capacity[-1] if self.relative_capacity else 0.5
+                    while len(self.relative_capacity) < self.num_resources:
+                        self.relative_capacity.append(last_cap)
             
     def validate(self) -> None:
         """Validate configuration parameters."""
@@ -120,22 +120,22 @@ class Config:
         if not 0 < self.weight < 1:
             raise ValueError("weight must be between 0 and 1")
             
-        if len(self.capacity) != self.num_resources:
-            raise ValueError("capacity length must match num_resources")
+        if len(self.relative_capacity) != self.num_resources:
+            raise ValueError("relative_capacity length must match num_resources")
             
-        if any(c < 0 for c in self.capacity):
-            raise ValueError("all capacities must be non-negative")
+        if any(c < 0 for c in self.relative_capacity):
+            raise ValueError("all relative capacities must be non-negative") 
 
     def __setattr__(self, name, value):
-        """Override setattr to handle capacity auto-adjustment."""
+        """Override setattr to handle relative_capacity auto-adjustment."""
         super().__setattr__(name, value)
         
-        # Auto-adjust capacity when num_resources changes
-        if name == 'num_resources' and hasattr(self, 'capacity'):
-            if len(self.capacity) != self.num_resources:
-                if len(self.capacity) > self.num_resources:
-                    self.capacity = self.capacity[:self.num_resources]
+        # Auto-adjust relative_capacity when num_resources changes
+        if name == 'num_resources' and hasattr(self, 'relative_capacity'):
+            if len(self.relative_capacity) != self.num_resources:
+                if len(self.relative_capacity) > self.num_resources:
+                    self.relative_capacity = self.relative_capacity[:self.num_resources]
                 else:
-                    last_cap = self.capacity[-1] if self.capacity else 1.0
-                    while len(self.capacity) < self.num_resources:
-                        self.capacity.append(last_cap)
+                    last_cap = self.relative_capacity[-1] if self.relative_capacity else 0.5
+                    while len(self.relative_capacity) < self.num_resources:
+                        self.relative_capacity.append(last_cap)

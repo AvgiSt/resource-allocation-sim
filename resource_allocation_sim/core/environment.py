@@ -11,27 +11,30 @@ class Environment:
     The environment tracks resource consumption and provides cost feedback
     to agents based on current resource loads.
     """
-    
+
     def __init__(
         self, 
         num_resources: int, 
-        capacity: Union[List[float], np.ndarray],
-        cost_function: str = "quadratic"
+        relative_capacity: Union[List[float], np.ndarray],
+        num_agents: int
     ):
         """
         Initialise the environment.
         
         Args:
             num_resources: Number of available resources
-            capacity: Capacity limits for each resource
-            cost_function: Type of cost function ('linear', 'quadratic', 'exponential')
+            relative_capacity: Relative capacity limits for each resource (fraction of agents)
+            num_agents: Number of agents in the system (used to calculate actual capacity)
         """
         self.num_resources = num_resources
-        self.capacity = np.array(capacity)
-        self.cost_function = cost_function
+        self.num_agents = num_agents
+        self.relative_capacity = np.array(relative_capacity)
         
-        if len(self.capacity) != num_resources:
-            raise ValueError("Capacity array length must match number of resources")
+        # Calculate actual capacity from relative capacity
+        self.capacity = self.relative_capacity * num_agents
+            
+        if len(self.relative_capacity) != num_resources:
+            raise ValueError("Relative capacity array length must match number of resources")
         
         # Current resource consumption
         self.consumption = np.zeros(num_resources)
@@ -39,7 +42,7 @@ class Environment:
         # History tracking
         self.consumption_history = []
         self.cost_history = []
-    
+        
     def step(self, actions: List[int]) -> List[float]:
         """
         Process agent actions and return costs.
@@ -64,7 +67,7 @@ class Environment:
         # Store history
         self.consumption_history.append(self.consumption.copy())
         self.cost_history.append(costs.copy())
-        
+            
         return costs.tolist()
     
     def _calculate_costs(self) -> np.ndarray:
@@ -74,21 +77,21 @@ class Environment:
         Returns:
             Array of costs for each resource
         """
-        # Calculate load ratios (consumption / capacity)
-        load_ratios = self.consumption / (self.capacity + 1e-12)  # Avoid division by zero
-        
-        if self.cost_function == "linear":
-            costs = load_ratios
-        elif self.cost_function == "quadratic":
-            costs = load_ratios ** 2
-        elif self.cost_function == "exponential":
-            costs = np.exp(load_ratios) - 1
-        else:
-            raise ValueError(f"Unknown cost function: {self.cost_function}")
+        # Calculate costs based on mathematical model:
+        # L(r,t) = 1 if consumption <= capacity (no congestion)
+        # L(r,t) = exp(1 - consumption/capacity) if consumption > capacity (congestion penalty)
+        costs = np.zeros(self.num_resources)
+        for road in range(self.num_resources):
+            if self.consumption[road] == 0:
+                costs[road] = 0.0 
+            elif self.consumption[road] <= self.capacity[road]:
+                costs[road] = 1.0  # No congestion
+            else:
+                costs[road] = np.exp(1 - (self.consumption[road] / self.capacity[road]))  # Congestion penalty
         
         # Ensure costs are non-negative
         costs = np.maximum(costs, 0.0)
-        
+                
         return costs
     
     def get_state(self) -> dict:
@@ -100,9 +103,10 @@ class Environment:
         """
         return {
             'num_resources': self.num_resources,
-            'capacity': self.capacity.tolist(),
+            'num_agents': self.num_agents,
+            'relative_capacity': self.relative_capacity.tolist(),
+            'actual_capacity': self.capacity.tolist(),  # For backward compatibility
             'consumption': self.consumption.tolist(),
-            'cost_function': self.cost_function,
             'consumption_history': [c.tolist() for c in self.consumption_history],
             'cost_history': [c.tolist() for c in self.cost_history]
         }
@@ -127,7 +131,7 @@ class Environment:
         
         Args:
             threshold: Overload threshold (default 1.0 = at capacity)
-            
+        
         Returns:
             List of boolean values indicating overload status
         """
@@ -141,4 +145,4 @@ class Environment:
     
     def __repr__(self) -> str:
         """String representation of environment."""
-        return f"Environment(resources={self.num_resources}, capacity={self.capacity.tolist()})" 
+        return f"Environment(resources={self.num_resources}, agents={self.num_agents}, relative_capacity={self.relative_capacity.tolist()}, actual_capacity={self.capacity.tolist()})" 

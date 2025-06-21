@@ -39,8 +39,8 @@ class ParameterSweepExperiment(BaseExperiment):
             configurations.append(config)
         return configurations
     
-    def analyze_results(self) -> Dict[str, Any]:
-        """Analyze parameter sweep results."""
+    def analyse_results(self) -> Dict[str, Any]:
+        """Analyse parameter sweep results."""
         analysis = {
             'parameter_name': self.parameter_name,
             'parameter_values': self.parameter_values,
@@ -86,9 +86,9 @@ class ParameterSweepExperiment(BaseExperiment):
             
             analysis['metrics_vs_parameter'][metric] = metric_data
             
-            # Analyze trends
+            # analyse trends
             means = [metric_data[pv]['mean'] for pv in self.parameter_values]
-            analysis['trends'][metric] = self._analyze_trend(self.parameter_values, means)
+            analysis['trends'][metric] = self._analyse_trend(self.parameter_values, means)
             
             # Find optimal values
             if 'cost' in metric.lower():
@@ -105,21 +105,33 @@ class ParameterSweepExperiment(BaseExperiment):
         
         return analysis
     
-    def _analyze_trend(
+    def _analyse_trend(
         self, 
         param_values: List[Any], 
         metric_values: List[float]
     ) -> Dict[str, Any]:
-        """Analyze trend in metric vs parameter."""
+        """analyse trend in metric vs parameter."""
         trend_analysis = {}
+        correlation = 0.0  # Initialize correlation variable
         
         try:
             # Convert to numeric if possible
             numeric_params = [float(p) for p in param_values]
             numeric_metrics = [float(m) for m in metric_values]
             
-            # Calculate correlation
-            correlation = np.corrcoef(numeric_params, numeric_metrics)[0, 1]
+            # Check for sufficient variance to calculate correlation
+            if len(set(numeric_params)) <= 1 or len(set(numeric_metrics)) <= 1:
+                # Insufficient variance for correlation
+                trend_analysis['correlation'] = 0.0
+                trend_analysis['linear_slope'] = 0.0
+                trend_analysis['linear_intercept'] = np.mean(numeric_metrics) if numeric_metrics else 0.0
+                trend_analysis['trend'] = 'no_variance'
+            else:
+                # Calculate correlation with error handling
+                with np.errstate(invalid='ignore'):
+                    corr_matrix = np.corrcoef(numeric_params, numeric_metrics)
+                    correlation = corr_matrix[0, 1] if not np.isnan(corr_matrix[0, 1]) else 0.0
+                
             trend_analysis['correlation'] = correlation
             
             # Fit linear trend
@@ -141,8 +153,10 @@ class ParameterSweepExperiment(BaseExperiment):
             else:
                 trend_analysis['trend'] = 'no_clear_trend'
                 
-        except (ValueError, TypeError):
-            trend_analysis['trend'] = 'non_numeric_parameter'
+        except (ValueError, TypeError, np.linalg.LinAlgError):
+            trend_analysis['trend'] = 'calculation_error'
             trend_analysis['correlation'] = None
+            trend_analysis['linear_slope'] = None
+            trend_analysis['linear_intercept'] = None
         
         return trend_analysis 

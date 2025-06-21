@@ -53,7 +53,7 @@ def _create_networkx_visualisation(
     for agent in agent_data:
         agent_id = agent.get('id', 0)
         history = agent.get('action_history', [])
-        
+    
         # Create transitions between consecutive actions
         for i in range(len(history) - 1):
             from_state = f"R{history[i]}"
@@ -153,12 +153,12 @@ def _create_fallback_visualisation(
     return fig
 
 
-def analyze_state_transitions(
+def analyse_state_transitions(
     agent_results: Dict[int, Dict[str, List]],
     threshold: float = 0.1
 ) -> Dict[str, Any]:
     """
-    Analyze state transition patterns.
+    Analyse state transition patterns.
     
     Args:
         agent_results: Dictionary of agent probability and action histories
@@ -179,7 +179,7 @@ def analyze_state_transitions(
     
     for agent_id, data in agent_results.items():
         prob_history = data['prob']
-        states = _discretize_states(prob_history, threshold)
+        states = _discretise_states(prob_history, threshold)
         transitions = _extract_transitions(states)
         
         analysis['states_per_agent'][agent_id] = len(set(states))
@@ -188,7 +188,7 @@ def analyze_state_transitions(
         all_states.update(states)
         all_transitions.extend(transitions)
         
-        # Analyze state persistence
+        # analyse state persistence
         if states:
             persistence = _calculate_state_persistence(states)
             analysis['state_persistence'][agent_id] = persistence
@@ -206,7 +206,7 @@ def analyze_state_transitions(
     return analysis
 
 
-def _discretize_states(prob_history: List[List[float]], threshold: float) -> List[str]:
+def _discretise_states(prob_history: List[List[float]], threshold: float) -> List[str]:
     """Convert probability history to discrete states."""
     states = []
     for probs in prob_history:
@@ -268,7 +268,7 @@ def plot_transition_graph(
     
     Args:
         agent_results: Dictionary of agent probability and action histories
-        agent_id: ID of agent to analyze
+        agent_id: ID of agent to analyse
         save_path: Optional path to save plot
         
     Returns:

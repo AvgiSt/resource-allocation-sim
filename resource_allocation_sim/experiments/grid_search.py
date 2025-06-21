@@ -3,6 +3,7 @@
 import numpy as np
 from typing import Dict, List, Any, Optional
 from itertools import product
+import pandas as pd
 
 from .base_experiment import BaseExperiment
 from ..utils.helpers import generate_parameter_grid
@@ -37,8 +38,8 @@ class GridSearchExperiment(BaseExperiment):
         """Generate all parameter combinations."""
         return generate_parameter_grid(**self.parameter_grid)
     
-    def analyze_results(self) -> Dict[str, Any]:
-        """Analyze grid search results."""
+    def analyse_results(self) -> Dict[str, Any]:
+        """Analyse grid search results."""
         analysis = {
             'parameter_effects': {},
             'best_configurations': {},
@@ -62,10 +63,10 @@ class GridSearchExperiment(BaseExperiment):
         import pandas as pd
         df = pd.DataFrame(all_data)
         
-        # Analyze parameter effects
+        # Analyse parameter effects
         for param_name in self.parameter_grid.keys():
             if param_name in df.columns:
-                analysis['parameter_effects'][param_name] = self._analyze_parameter_effect(
+                analysis['parameter_effects'][param_name] = self._analyse_parameter_effect(
                     df, param_name
                 )
         
@@ -88,12 +89,12 @@ class GridSearchExperiment(BaseExperiment):
         
         return analysis
     
-    def _analyze_parameter_effect(
+    def _analyse_parameter_effect(
         self, 
         df: 'pd.DataFrame', 
         param_name: str
     ) -> Dict[str, Any]:
-        """Analyze the effect of a single parameter."""
+        """Analyse the effect of a single parameter."""
         effect_analysis = {}
         
         # Group by parameter value

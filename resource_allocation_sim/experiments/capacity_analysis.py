@@ -70,8 +70,8 @@ class CapacityAnalysisExperiment(BaseExperiment):
         
         return configurations
     
-    def analyze_results(self) -> Dict[str, Any]:
-        """Analyze capacity analysis results."""
+    def analyse_results(self) -> Dict[str, Any]:
+        """Analyse capacity analysis results."""
         analysis = {
             'capacity_effects': {},
             'optimal_capacities': {},
@@ -94,14 +94,14 @@ class CapacityAnalysisExperiment(BaseExperiment):
                 'gini_coefficient_mean': summary_metrics.get('gini_coefficient_mean', 0)
             })
         
-        # Analyze capacity effects
-        analysis['capacity_effects'] = self._analyze_capacity_effects(capacity_results)
+        # Analyse capacity effects
+        analysis['capacity_effects'] = self._analyse_capacity_effects(capacity_results)
         
         # Find optimal capacities
         analysis['optimal_capacities'] = self._find_optimal_capacities(capacity_results)
         
         # Balance analysis
-        analysis['balance_analysis'] = self._analyze_balance_effects(capacity_results)
+        analysis['balance_analysis'] = self._analyse_balance_effects(capacity_results)
         
         # Capacity clustering
         analysis['capacity_clusters'] = self._cluster_capacities(capacity_results)
@@ -120,8 +120,8 @@ class CapacityAnalysisExperiment(BaseExperiment):
         # Coefficient of variation
         return np.std(capacity) / mean_cap
     
-    def _analyze_capacity_effects(self, capacity_results: List[Dict]) -> Dict[str, Any]:
-        """Analyze effects of total capacity and individual resource capacities."""
+    def _analyse_capacity_effects(self, capacity_results: List[Dict]) -> Dict[str, Any]:
+        """Analyse effects of total capacity and individual resource capacities."""
         effects = {}
         
         # Total capacity effects
@@ -131,12 +131,12 @@ class CapacityAnalysisExperiment(BaseExperiment):
         
         if len(set(total_caps)) > 1:  # Only if there's variation
             effects['total_capacity_vs_cost'] = {
-                'correlation': np.corrcoef(total_caps, costs)[0, 1] if len(total_caps) > 1 else 0,
+                'correlation': self._safe_correlation(total_caps, costs),
                 'trend': self._determine_trend(total_caps, costs)
             }
             
             effects['total_capacity_vs_entropy'] = {
-                'correlation': np.corrcoef(total_caps, entropies)[0, 1] if len(total_caps) > 1 else 0,
+                'correlation': self._safe_correlation(total_caps, entropies),
                 'trend': self._determine_trend(total_caps, entropies)
             }
         
@@ -148,7 +148,7 @@ class CapacityAnalysisExperiment(BaseExperiment):
                 resource_caps = [r['capacity'][i] for r in capacity_results]
                 
                 effects[f'resource_{i+1}_vs_cost'] = {
-                    'correlation': np.corrcoef(resource_caps, costs)[0, 1] if len(set(resource_caps)) > 1 else 0,
+                    'correlation': self._safe_correlation(resource_caps, costs),
                     'trend': self._determine_trend(resource_caps, costs)
                 }
         
@@ -185,8 +185,8 @@ class CapacityAnalysisExperiment(BaseExperiment):
         
         return optimal
     
-    def _analyze_balance_effects(self, capacity_results: List[Dict]) -> Dict[str, Any]:
-        """Analyze effects of capacity balance on performance."""
+    def _analyse_balance_effects(self, capacity_results: List[Dict]) -> Dict[str, Any]:
+        """Analyse effects of capacity balance on performance."""
         balance_analysis = {}
         
         balances = [r['capacity_balance'] for r in capacity_results]
@@ -195,12 +195,12 @@ class CapacityAnalysisExperiment(BaseExperiment):
         
         # Balance vs performance correlations
         balance_analysis['balance_vs_cost'] = {
-            'correlation': np.corrcoef(balances, costs)[0, 1] if len(set(balances)) > 1 else 0,
+            'correlation': self._safe_correlation(balances, costs),
             'trend': self._determine_trend(balances, costs)
         }
         
         balance_analysis['balance_vs_entropy'] = {
-            'correlation': np.corrcoef(balances, entropies)[0, 1] if len(set(balances)) > 1 else 0,
+            'correlation': self._safe_correlation(balances, entropies),
             'trend': self._determine_trend(balances, entropies)
         }
         
@@ -264,12 +264,25 @@ class CapacityAnalysisExperiment(BaseExperiment):
         
         return clustering
     
+    def _safe_correlation(self, x_values: List[float], y_values: List[float]) -> float:
+        """Safely calculate correlation coefficient."""
+        if len(set(x_values)) <= 1 or len(set(y_values)) <= 1:
+            return 0.0
+        
+        try:
+            with np.errstate(invalid='ignore'):
+                corr_matrix = np.corrcoef(x_values, y_values)
+                correlation = corr_matrix[0, 1] if not np.isnan(corr_matrix[0, 1]) else 0.0
+                return correlation
+        except (ValueError, TypeError, np.linalg.LinAlgError):
+            return 0.0
+    
     def _determine_trend(self, x_values: List[float], y_values: List[float]) -> str:
         """Determine trend direction between two variables."""
         if len(set(x_values)) <= 1:
             return 'no_variation'
         
-        correlation = np.corrcoef(x_values, y_values)[0, 1]
+        correlation = self._safe_correlation(x_values, y_values)
         
         if abs(correlation) > 0.7:
             return 'strong_positive' if correlation > 0 else 'strong_negative'

@@ -7,9 +7,9 @@ from typing import Dict, List, Any, Tuple, Optional
 from .metrics import calculate_entropy
 
 
-def analyze_agent_convergence(agent_results: Dict[int, Dict[str, List]]) -> Dict[str, Any]:
+def analyse_agent_convergence(agent_results: Dict[int, Dict[str, List]]) -> Dict[str, Any]:
     """
-    Analyze convergence behavior of individual agents.
+    Analyse convergence behavior of individual agents.
     
     Args:
         agent_results: Dictionary of agent probability and action histories

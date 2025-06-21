@@ -126,7 +126,7 @@ class ComprehensiveStudy:
         )
         
         results = experiment.run_experiment(num_episodes)
-        analysis = experiment.analyze_results()
+        analysis = experiment.analyse_results()
         
         return {
             'results': results,
@@ -155,7 +155,7 @@ class ComprehensiveStudy:
         )
         
         results = experiment.run_experiment(num_episodes)
-        analysis = experiment.analyze_results()
+        analysis = experiment.analyse_results()
         
         return {
             'results': results,
@@ -319,7 +319,7 @@ class ComprehensiveStudy:
         # Scaling Analysis Summary
         if 'scaling_analysis' in self.study_results:
             scaling_results = self.study_results['scaling_analysis']
-            report_sections.append("Scaling behavior analyzed for both agents and resources")
+            report_sections.append("Scaling behavior analysed for both agents and resources")
         
         # Save report
         report_content = "\n".join(report_sections)
@@ -355,8 +355,8 @@ class ComprehensiveStudy:
         """Get study results directory."""
         return self.results_dir
     
-    def analyze_cross_experiment_correlations(self) -> Dict[str, Any]:
-        """Analyze correlations across different experiments."""
+    def analyse_cross_experiment_correlations(self) -> Dict[str, Any]:
+        """Analyse correlations across different experiments."""
         correlations = {}
         
         # Extract key metrics from each experiment type
@@ -407,8 +407,18 @@ class ComprehensiveStudy:
         
         for metric1_name, values1 in metrics1.items():
             for metric2_name, values2 in metrics2.items():
-                if len(values1) == len(values2):
-                    correlation = np.corrcoef(values1, values2)[0, 1]
+                if len(values1) == len(values2) and len(values1) > 1:
+                    # Check for sufficient variance
+                    if len(set(values1)) <= 1 or len(set(values2)) <= 1:
+                        correlation = 0.0
+                    else:
+                        try:
+                            with np.errstate(invalid='ignore'):
+                                corr_matrix = np.corrcoef(values1, values2)
+                                correlation = corr_matrix[0, 1] if not np.isnan(corr_matrix[0, 1]) else 0.0
+                        except (ValueError, np.linalg.LinAlgError):
+                            correlation = 0.0
+                    
                     correlations[f"{metric1_name}_vs_{metric2_name}"] = correlation
         
         return correlations 

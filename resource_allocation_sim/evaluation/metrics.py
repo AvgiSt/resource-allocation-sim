@@ -29,6 +29,32 @@ def calculate_entropy(consumption: Union[List[float], np.ndarray]) -> float:
     return entropy
 
 
+def calculate_probability_entropy(probabilities: Union[List[float], np.ndarray]) -> float:
+    """
+    Calculate Shannon entropy of a probability distribution.
+    
+    This function is specifically for probability distributions that are already normalised 
+    (i.e., sum to 1.0). Use calculate_entropy() for consumption/count data that needs normalisation.
+    
+    Args:
+        probabilities: Probability distribution values (should sum to ~1.0)
+        
+    Returns:
+        Shannon entropy of the probability distribution
+    """
+    probabilities = np.array(probabilities, dtype=float)
+    
+    # Remove zeros to avoid log(0)
+    nonzero_probs = probabilities[probabilities > 0]
+    
+    if len(nonzero_probs) == 0:
+        return 0.0
+    
+    # Calculate Shannon entropy directly
+    entropy = -np.sum(nonzero_probs * np.log2(nonzero_probs))
+    return entropy
+
+
 def calculate_gini_coefficient(consumption: Union[List[float], np.ndarray]) -> float:
     """
     Calculate Gini coefficient of resource consumption distribution.
@@ -181,9 +207,9 @@ def calculate_system_metrics(
     return metrics
 
 
-def analyze_convergence_patterns(agent_results: Dict[int, Dict[str, List]]) -> Dict[str, Any]:
+def analyse_convergence_patterns(agent_results: Dict[int, Dict[str, List]]) -> Dict[str, Any]:
     """
-    Analyze convergence patterns of agents.
+    Analyse convergence patterns of agents.
     
     Args:
         agent_results: Dictionary of agent probability and action histories

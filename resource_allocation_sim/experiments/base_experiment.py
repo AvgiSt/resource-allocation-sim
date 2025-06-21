@@ -59,9 +59,9 @@ class BaseExperiment(ABC):
         pass
     
     @abstractmethod
-    def analyze_results(self) -> Dict[str, Any]:
+    def analyse_results(self) -> Dict[str, Any]:
         """
-        Analyze experimental results.
+        Analyse experimental results.
         
         Returns:
             Dictionary containing analysis results
@@ -106,7 +106,12 @@ class BaseExperiment(ABC):
             # Run episodes
             episode_results = []
             for episode in range(num_episodes):
-                runner = SimulationRunner(config)
+                # Create custom agent factory if needed
+                custom_agent_factory = None
+                if hasattr(self, 'create_custom_agent_factory'):
+                    custom_agent_factory = self.create_custom_agent_factory(config_params, config)
+                
+                runner = SimulationRunner(config, custom_agent_factory)
                 runner.setup()
                 result = runner.run()
                 result['config_params'] = config_params
@@ -126,8 +131,8 @@ class BaseExperiment(ABC):
         # Save results
         self._save_results()
         
-        # Analyze results
-        analysis = self.analyze_results()
+        # Analyse results
+        analysis = self.analyse_results()
         
         return {
             'metadata': self.metadata,

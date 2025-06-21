@@ -8,7 +8,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from .metrics import calculate_entropy, calculate_gini_coefficient, calculate_system_metrics
 
 
-def analyze_system_performance(
+def analyse_system_performance(
     results: Dict[str, Any],
     detailed: bool = True
 ) -> Dict[str, Any]:
@@ -315,7 +315,7 @@ def generate_summary_report(
     report_lines.append(f"  Capacity: {config.get('capacity', 'N/A')}")
     
     # System metrics
-    analysis = analyze_system_performance(results)
+    analysis = analyse_system_performance(results)
     metrics = analysis['basic_metrics']
     
     report_lines.append("\nSYSTEM METRICS:")
@@ -352,4 +352,277 @@ def generate_summary_report(
 
 def generate_analysis_report(results: Dict[str, Any]) -> str:
     """Generate analysis report - this function was referenced but missing."""
-    return generate_summary_report(results)  # Use existing function 
+    return generate_summary_report(results)  # Use existing function
+
+
+def perform_convergence_statistical_tests(analysis: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Perform statistical tests for system-level convergence patterns.
+    
+    This function tests various hypotheses about system convergence behaviour,
+    including temporal patterns, degeneracy achievement, and sequential ordering.
+    
+    Args:
+        analysis: Analysis dictionary containing convergence data with keys:
+            - 'convergence_times': dict with 'all_times' list
+            - 'sequential_indices': dict with 'all_indices' list  
+            - 'degeneracy_scores': dict with 'all_scores' list
+    
+    Returns:
+        Dictionary containing statistical test results
+    """
+    import scipy.stats as stats
+    
+    tests = {}
+    
+    convergence_times = analysis.get('convergence_times', {}).get('all_times', [])
+    sequential_indices = analysis.get('sequential_indices', {}).get('all_indices', [])
+    degeneracy_scores = analysis.get('degeneracy_scores', {}).get('all_scores', [])
+    
+    # Test 1: Kolmogorov-Smirnov test for uniform distribution of convergence times
+    if len(convergence_times) > 1:
+        try:
+            ks_stat, ks_pvalue = stats.kstest(
+                np.array(convergence_times), 
+                lambda x: stats.uniform.cdf(
+                    x, 
+                    loc=min(convergence_times), 
+                    scale=max(convergence_times) - min(convergence_times)
+                )
+            )
+            tests['convergence_uniformity'] = {
+                'test': 'Kolmogorov-Smirnov',
+                'statistic': ks_stat,
+                'p_value': ks_pvalue,
+                'interpretation': 'H0: convergence times are uniformly distributed',
+                'significant': ks_pvalue < 0.05
+            }
+        except Exception as e:
+            tests['convergence_uniformity'] = {
+                'test': 'Kolmogorov-Smirnov',
+                'error': str(e),
+                'statistic': None,
+                'p_value': None
+            }
+    
+    # Test 2: One-sample t-test for sequential index > 0.5 (more sequential than random)
+    if len(sequential_indices) > 1:
+        try:
+            t_stat, t_pvalue = stats.ttest_1samp(sequential_indices, 0.5)
+            tests['sequential_pattern'] = {
+                'test': 'One-sample t-test',
+                'statistic': t_stat,
+                'p_value': t_pvalue,
+                'interpretation': 'H0: sequential index = 0.5 (random), H1: sequential index > 0.5',
+                'significant': t_pvalue < 0.05,
+                'more_sequential': t_stat > 0
+            }
+        except Exception as e:
+            tests['sequential_pattern'] = {
+                'test': 'One-sample t-test',
+                'error': str(e),
+                'statistic': None,
+                'p_value': None
+            }
+    
+    return tests
+
+
+def test_sequential_convergence_hypothesis(
+    analysis: Dict[str, Any], 
+    convergence_threshold_max_prob: float = 0.9,
+    expected_degeneracy_proportion: float = 0.9
+) -> Dict[str, Any]:
+    """
+    Test specific hypothesis about sequential convergence patterns.
+    
+    H2: Agents with uniform initial distribution sequentially converge 
+    to degenerate distributions.
+    
+    Args:
+        analysis: Analysis dictionary containing convergence data
+        convergence_threshold_max_prob: Threshold for considering agent converged
+        expected_degeneracy_proportion: Expected proportion achieving degeneracy
+        
+    Returns:
+        Dictionary containing hypothesis test results
+    """
+    import scipy.stats as stats
+    
+    tests = {}
+    degeneracy_scores = analysis.get('degeneracy_scores', {}).get('all_scores', [])
+    
+    # Test 3: Binomial test for proportion achieving degeneracy
+    if len(degeneracy_scores) > 0:
+        n_degenerate = sum(s > convergence_threshold_max_prob for s in degeneracy_scores)
+        n_total = len(degeneracy_scores)
+        
+        try:
+            # Use the newer binomtest function if available
+            try:
+                binom_result = stats.binomtest(n_degenerate, n_total, expected_degeneracy_proportion)
+                binom_pvalue = binom_result.pvalue
+            except AttributeError:
+                # Fallback for older scipy versions
+                binom_pvalue = stats.binom_test(n_degenerate, n_total, expected_degeneracy_proportion)
+            
+            tests['degeneracy_proportion'] = {
+                'test': 'Binomial test',
+                'observed': n_degenerate,
+                'total': n_total,
+                'proportion': n_degenerate / n_total if n_total > 0 else 0,
+                'expected_proportion': expected_degeneracy_proportion,
+                'p_value': binom_pvalue,
+                'interpretation': f'H0: proportion degenerate = {expected_degeneracy_proportion}, H1: proportion ≠ {expected_degeneracy_proportion}',
+                'significant': binom_pvalue < 0.05
+            }
+        except Exception as e:
+            tests['degeneracy_proportion'] = {
+                'test': 'Binomial test',
+                'error': str(e),
+                'observed': n_degenerate,
+                'total': n_total,
+                'proportion': n_degenerate / n_total if n_total > 0 else 0
+            }
+    
+    return tests
+
+
+def calculate_system_convergence_metrics(replication_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Calculate system-level convergence pattern metrics.
+    
+    This function computes metrics that characterise how the system as a whole
+    converges, including temporal patterns and coordination measures.
+    
+    Args:
+        replication_data: List of dictionaries containing convergence data per replication
+        
+    Returns:
+        Dictionary containing system convergence metrics
+    """
+    if not replication_data:
+        return {}
+    
+    metrics = {
+        'temporal_patterns': {},
+        'coordination_measures': {},
+        'system_efficiency': {}
+    }
+    
+    # Extract all sequential indices
+    sequential_indices = [rep.get('sequential_index', 0) for rep in replication_data]
+    
+    # Extract all convergence times across replications
+    all_convergence_times = []
+    for rep in replication_data:
+        conv_times = rep.get('convergence_times', [])
+        all_convergence_times.extend(conv_times)
+    
+    # Temporal pattern metrics
+    if sequential_indices:
+        metrics['temporal_patterns'] = {
+            'mean_sequential_index': np.mean(sequential_indices),
+            'std_sequential_index': np.std(sequential_indices),
+            'sequential_consistency': 1.0 - np.std(sequential_indices),  # Higher = more consistent
+            'proportion_sequential': np.mean([si > 0.5 for si in sequential_indices])
+        }
+    
+    # Coordination measures
+    if all_convergence_times:
+        # Calculate coordination efficiency
+        total_agents_converged = len(all_convergence_times)
+        mean_convergence_time = np.mean(all_convergence_times)
+        convergence_spread = np.max(all_convergence_times) - np.min(all_convergence_times) if len(all_convergence_times) > 1 else 0
+        
+        metrics['coordination_measures'] = {
+            'mean_convergence_time': mean_convergence_time,
+            'convergence_spread': convergence_spread,
+            'convergence_efficiency': total_agents_converged / (mean_convergence_time + 1),  # Agents per time unit
+            'temporal_coordination': 1.0 / (1.0 + convergence_spread / mean_convergence_time) if mean_convergence_time > 0 else 0
+        }
+    
+    # System efficiency metrics
+    convergence_success_rates = []
+    for rep in replication_data:
+        total_agents = rep.get('total_agents', 10)  # Default assumption
+        converged_agents = rep.get('num_converged', len(rep.get('convergence_times', [])))
+        success_rate = converged_agents / total_agents if total_agents > 0 else 0
+        convergence_success_rates.append(success_rate)
+    
+    if convergence_success_rates:
+        metrics['system_efficiency'] = {
+            'mean_success_rate': np.mean(convergence_success_rates),
+            'std_success_rate': np.std(convergence_success_rates),
+            'min_success_rate': np.min(convergence_success_rates),
+            'max_success_rate': np.max(convergence_success_rates)
+        }
+    
+    return metrics
+
+
+def evaluate_hypothesis_support(
+    convergence_analysis: Dict[str, Any], 
+    statistical_tests: Dict[str, Any],
+    convergence_metrics: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Evaluate level of support for sequential convergence hypothesis.
+    
+    Combines statistical test results with convergence metrics to provide
+    an overall assessment of hypothesis support.
+    
+    Args:
+        convergence_analysis: Results from convergence analysis
+        statistical_tests: Results from statistical tests
+        convergence_metrics: System-level convergence metrics
+        
+    Returns:
+        Dictionary containing hypothesis support evaluation
+    """
+    support = {
+        'overall_support': 'undetermined',
+        'criteria_met': {},
+        'evidence_strength': {},
+        'recommendation': ''
+    }
+    
+    # Criterion 1: Sequential pattern (sequential index > 0.5)
+    temporal_patterns = convergence_metrics.get('temporal_patterns', {})
+    mean_seq_index = temporal_patterns.get('mean_sequential_index', 0)
+    if mean_seq_index > 0:
+        support['criteria_met']['sequential_pattern'] = mean_seq_index > 0.5
+        support['evidence_strength']['sequential_index'] = mean_seq_index
+    
+    # Criterion 2: High degeneracy proportion
+    deg_test = statistical_tests.get('degeneracy_proportion', {})
+    deg_proportion = deg_test.get('proportion', 0)
+    if deg_proportion > 0:
+        support['criteria_met']['high_degeneracy'] = deg_proportion > 0.8
+        support['evidence_strength']['degeneracy_proportion'] = deg_proportion
+    
+    # Criterion 3: Statistical significance
+    seq_test = statistical_tests.get('sequential_pattern', {})
+    if 'significant' in seq_test:
+        support['criteria_met']['statistical_significance'] = seq_test['significant']
+        support['evidence_strength']['sequential_p_value'] = seq_test.get('p_value', 1.0)
+    
+    # Overall assessment
+    criteria_met = list(support['criteria_met'].values())
+    if len(criteria_met) > 0:
+        prop_criteria_met = sum(criteria_met) / len(criteria_met)
+        
+        if prop_criteria_met >= 0.8:
+            support['overall_support'] = 'strong'
+            support['recommendation'] = 'Strong evidence for sequential convergence hypothesis'
+        elif prop_criteria_met >= 0.6:
+            support['overall_support'] = 'moderate'
+            support['recommendation'] = 'Moderate evidence for sequential convergence hypothesis'
+        elif prop_criteria_met >= 0.4:
+            support['overall_support'] = 'weak'
+            support['recommendation'] = 'Weak evidence for sequential convergence hypothesis'
+        else:
+            support['overall_support'] = 'none'
+            support['recommendation'] = 'Little evidence for sequential convergence hypothesis'
+    
+    return support 

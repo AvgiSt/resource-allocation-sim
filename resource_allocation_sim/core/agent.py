@@ -10,7 +10,7 @@ class Agent:
     
     Uses probability-based learning to adapt resource selection over time.
     """
-    
+
     def __init__(
         self, 
         agent_id: int, 
@@ -42,6 +42,9 @@ class Agent:
             # Random initialisation with softmax normalisation
             logits = np.random.normal(0, 1, num_resources)
             self.probabilities = self._softmax(logits)
+        elif initialisation_method == "custom":
+            # Custom initialisation - start with uniform, to be overridden by custom factory
+            self.probabilities = np.ones(num_resources) / num_resources
         else:
             raise ValueError(f"Unknown initialisation method: {initialisation_method}")
         
@@ -49,7 +52,7 @@ class Agent:
         self.action_history = []
         self.probability_history = []
         self.cost_history = []
-    
+
     def select_action(self) -> int:
         """
         Select a resource based on current probabilities.
@@ -60,39 +63,40 @@ class Agent:
         action = np.random.choice(self.num_resources, p=self.probabilities)
         self.action_history.append(action)
         return action
-    
-    def update_probabilities(self, costs: List[float]) -> None:
+
+    def update_probabilities(self, selected_resource: int, observed_cost: float) -> None:
         """
-        Update selection probabilities based on observed costs.
+        Update selection probabilities based on observed cost for selected resource.
+        
+        Uses the mathematical model:
+        λ = w_r * L(r,t)
+        p(a|r) = λ·I + (1-λ)·p(a|r)
         
         Args:
-            costs: Cost for each resource
+            selected_resource: Index of the resource that was selected
+            observed_cost: Cost observed for the selected resource (L(r,t))
         """
-        if len(costs) != self.num_resources:
-            raise ValueError("Number of costs must match number of resources")
+        # Store cost information (sparse representation)
+        cost_info = {'resource': selected_resource, 'cost': observed_cost}
+        self.cost_history.append(cost_info)
         
-        # Store cost information
-        self.cost_history.append(costs.copy())
+        # Calculate λ = w_r * L(r,t)
+        # where w_r is the agent weight and L(r,t) is the observed cost
+        lambda_factor = self.weight * observed_cost
         
-        # Update probabilities using weighted average with inverse costs
-        # Lower costs should lead to higher probabilities
-        inverse_costs = 1.0 / (np.array(costs) + 1e-10)  # Avoid division by zero
+        # Create unit vector I with 1 for selected resource, 0 for others
+        unit_vector = np.zeros(self.num_resources)
+        unit_vector[selected_resource] = 1.0
         
-        # Normalise inverse costs to get target probabilities
-        target_probabilities = inverse_costs / np.sum(inverse_costs)
-        
-        # Update probabilities with learning weight
-        self.probabilities = (
-            (1 - self.weight) * self.probabilities + 
-            self.weight * target_probabilities
-        )
+        # Apply probability update formula: p(a|r) = λ·I + (1-λ)·p(a|r)
+        self.probabilities = lambda_factor * unit_vector + (1 - lambda_factor) * self.probabilities
         
         # Ensure probabilities sum to 1 (numerical stability)
         self.probabilities = self.probabilities / np.sum(self.probabilities)
-        
+
         # Store probability history
         self.probability_history.append(self.probabilities.copy())
-    
+
     def get_state(self) -> dict:
         """
         Get current agent state.
@@ -105,7 +109,7 @@ class Agent:
             'probabilities': self.probabilities.copy(),
             'action_history': self.action_history.copy(),
             'probability_history': [p.copy() for p in self.probability_history],
-            'cost_history': [c.copy() for c in self.cost_history],
+            'cost_history': self.cost_history.copy(),  # Now contains dicts with resource and cost
             'num_resources': self.num_resources,
             'weight': self.weight,
             'initialisation_method': self.initialisation_method
@@ -121,6 +125,9 @@ class Agent:
         elif self.initialisation_method == "softmax":
             logits = np.random.normal(0, 1, self.num_resources)
             self.probabilities = self._softmax(logits)
+        elif self.initialisation_method == "custom":
+            # Custom initialisation - reset to uniform, custom factory should override
+            self.probabilities = np.ones(self.num_resources) / self.num_resources
         
         # Clear history
         self.action_history = []

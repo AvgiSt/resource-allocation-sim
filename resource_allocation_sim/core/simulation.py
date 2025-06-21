@@ -39,10 +39,11 @@ class SimulationRunner:
         
     def setup(self) -> None:
         """Set up simulation components."""
-        # Create environment
+        # Create environment with relative capacity
         self.environment = Environment(
             num_resources=self.config.num_resources,
-            capacity=self.config.capacity
+            relative_capacity=self.config.relative_capacity,
+            num_agents=self.config.num_agents
         )
         
         # Create agents
@@ -68,6 +69,8 @@ class SimulationRunner:
                     agent = Agent(i, self.config.num_resources, self.config.weight, "dirichlet")
                 elif init_method == "softmax":
                     agent = Agent(i, self.config.num_resources, self.config.weight, "softmax")
+                elif init_method == "custom":
+                    agent = Agent(i, self.config.num_resources, self.config.weight, "custom")
                 else:
                     raise ValueError(f"Unknown initialisation method: {init_method}")
                     
@@ -104,9 +107,11 @@ class SimulationRunner:
                 agent_results[agent.id]["prob"].append(agent.probabilities.copy())
                 agent_results[agent.id]["action"].append(actions[agent.id])
             
-            # Update agent probabilities based on all costs
-            for agent in self.agents:
-                agent.update_probabilities(costs)
+            # Update agent probabilities - each agent only gets cost for their selected resource
+            for i, agent in enumerate(self.agents):
+                selected_resource = actions[i]
+                observed_cost = costs[selected_resource]
+                agent.update_probabilities(selected_resource, observed_cost)
         
         # Compile results
         self.results = {
@@ -154,3 +159,4 @@ class SimulationRunner:
         if self.environment is None:
             raise ValueError("Environment not initialised. Call setup() first.")
         return self.environment 
+    

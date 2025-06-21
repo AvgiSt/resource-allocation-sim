@@ -44,6 +44,7 @@ def plot_resource_distribution(
 def plot_convergence_comparison(
     results_dict: Dict[str, List[Dict[str, Any]]],
     metric: str = 'entropy',
+    ylabel: Optional[str] = None,
     save_path: Optional[str] = None
 ) -> plt.Figure:
     """
@@ -52,6 +53,7 @@ def plot_convergence_comparison(
     Args:
         results_dict: Dictionary mapping config names to result lists
         metric: Metric to plot ('entropy', 'cost', 'gini')
+        ylabel: Custom y-axis label (defaults to metric.title())
         save_path: Optional path to save plot
         
     Returns:
@@ -59,6 +61,9 @@ def plot_convergence_comparison(
     """
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     axes = axes.flatten()
+    
+    # Determine y-axis label
+    y_label = ylabel if ylabel is not None else metric.title()
     
     # Collect all data
     all_data = []
@@ -78,38 +83,38 @@ def plot_convergence_comparison(
                 value = calculate_gini_coefficient(final_consumption)
             
             values.append(value)
-            all_data.append({'Config': config_name, metric.title(): value, 'Episode': len(values)})
+            all_data.append({'Config': config_name, y_label: value, 'Episode': len(values)})
         
         # Plot time series for this config
         axes[0].plot(values, label=config_name, alpha=0.7, linewidth=2)
     
     # Time series plot
     axes[0].set_xlabel('Episode')
-    axes[0].set_ylabel(metric.title())
-    axes[0].set_title(f'{metric.title()} Evolution by Configuration')
+    axes[0].set_ylabel(y_label)
+    axes[0].set_title(f'{y_label} Evolution by Configuration')
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
     
     # Box plot comparison
     df = pd.DataFrame(all_data)
-    sns.boxplot(data=df, x='Config', y=metric.title(), ax=axes[1])
-    axes[1].set_title(f'{metric.title()} Distribution by Configuration')
+    sns.boxplot(data=df, x='Config', y=y_label, ax=axes[1])
+    axes[1].set_title(f'{y_label} Distribution by Configuration')
     axes[1].tick_params(axis='x', rotation=45)
     
     # Histogram
     for config_name, results_list in results_dict.items():
-        values = [all_data[i][metric.title()] for i, d in enumerate(all_data) if d['Config'] == config_name]
+        values = [all_data[i][y_label] for i, d in enumerate(all_data) if d['Config'] == config_name]
         axes[2].hist(values, alpha=0.6, label=config_name, bins=15)
     
-    axes[2].set_xlabel(metric.title())
+    axes[2].set_xlabel(y_label)
     axes[2].set_ylabel('Frequency')
-    axes[2].set_title(f'{metric.title()} Histogram')
+    axes[2].set_title(f'{y_label} Histogram')
     axes[2].legend()
     
     # Summary statistics
     summary_data = []
     for config_name, results_list in results_dict.items():
-        values = [all_data[i][metric.title()] for i, d in enumerate(all_data) if d['Config'] == config_name]
+        values = [all_data[i][y_label] for i, d in enumerate(all_data) if d['Config'] == config_name]
         summary_data.append({
             'Config': config_name,
             'Mean': np.mean(values),
@@ -261,3 +266,201 @@ def plot_cost_contour(
             fig.savefig(save_path, dpi=300, bbox_inches='tight')
         
         return fig 
+
+
+def create_sample_plots(
+    num_agents: int = 30,
+    num_resources: int = 3,
+    capacity: List[float] = None,
+    output_dir: str = "visualisation_output"
+) -> None:
+    """
+    Generate sample visualisations for demonstration purposes.
+    
+    Args:
+        num_agents: Number of agents in simulation
+        num_resources: Number of resources
+        capacity: Resource capacities
+        output_dir: Directory to save plots
+    """
+    import os
+    from ..core.simulation import SimulationRunner
+    from ..utils.config import Config
+    
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Set default capacity if not provided
+    if capacity is None:
+        capacity = [1.0] * num_resources
+    elif len(capacity) != num_resources:
+        # Adjust capacity to match resources
+        capacity = capacity[:num_resources] + [1.0] * (num_resources - len(capacity))
+    
+    print(f"Generating sample plots with {num_agents} agents, {num_resources} resources")
+    print(f"Capacity: {capacity}")
+    
+    # Create configuration
+    config = Config()
+    config.num_agents = num_agents
+    config.num_resources = num_resources
+    config.capacity = capacity
+    config.num_iterations = 200
+    
+    # Run simulation
+    runner = SimulationRunner(config)
+    runner.setup()
+    results = runner.run()
+    
+    # Generate plots
+    
+    # 1. Resource distribution plot
+    fig1 = plot_resource_distribution(
+        consumption=results['final_consumption'],
+        capacity=capacity,
+        save_path=os.path.join(output_dir, 'resource_distribution.png')
+    )
+    plt.close(fig1)
+    print(f"Resource distribution plot saved")
+    
+    # 2. Generate multiple runs for comparison
+    print("Running multiple simulations for comparison plots...")
+    comparison_results = {}
+    
+    # Different weight values
+    weights = [0.3, 0.5, 0.7]
+    for weight in weights:
+        config.weight = weight
+        runner = SimulationRunner(config)
+        runner.setup()
+        run_results = []
+        
+        # Run multiple episodes
+        for _ in range(5):
+            result = runner.run()
+            run_results.append(result)
+        
+        comparison_results[f'weight_{weight}'] = run_results
+    
+    # 3. Convergence comparison plot
+    fig2 = plot_convergence_comparison(
+        results_dict=comparison_results,
+        metric='entropy',
+        save_path=os.path.join(output_dir, 'convergence_comparison.png')
+    )
+    plt.close(fig2)
+    print(f"Convergence comparison plot saved")
+    
+    # 4. Parameter sensitivity plot
+    parameter_results = {}
+    for weight in weights:
+        metric_values = []
+        for result in comparison_results[f'weight_{weight}']:
+            # Calculate entropy for each result
+            from ..evaluation.metrics import calculate_entropy
+            entropy = calculate_entropy(np.array(result['final_consumption']))
+            metric_values.append(entropy)
+        parameter_results[str(weight)] = metric_values
+    
+    fig3 = plot_parameter_sensitivity(
+        parameter_results=parameter_results,
+        parameter_name='Learning Weight',
+        metric_name='Entropy',
+        save_path=os.path.join(output_dir, 'parameter_sensitivity.png')
+    )
+    plt.close(fig3)
+    print(f"Parameter sensitivity plot saved")
+    
+    # 5. Try to generate ternary plot if available and num_resources == 3
+    if num_resources == 3:
+        try:
+            from .ternary import plot_ternary_distribution
+            fig4 = plot_ternary_distribution(
+                consumption_history=[results['final_consumption']],
+                save_path=os.path.join(output_dir, 'ternary_distribution.png')
+            )
+            plt.close(fig4)
+            print(f"Ternary plot saved")
+        except ImportError:
+            print("  mpltern not available - skipping ternary plots")
+        except Exception as e:
+            print(f"Could not generate ternary plot: {e}")
+    
+    # 6. Try to generate network plot if available
+    try:
+        from .network import visualise_state_network
+        fig5 = visualise_state_network(
+            agent_history=results.get('agent_history', []),
+            save_path=os.path.join(output_dir, 'state_network.png')
+        )
+        plt.close(fig5)
+        print(f"Network plot saved")
+    except ImportError:
+        print("networkx not available - skipping network plots")
+    except Exception as e:
+        print(f"Could not generate network plot: {e}")
+    
+    print(f"\nSample plots generated successfully in: {output_dir}")
+    print("Available plots:")
+    for filename in os.listdir(output_dir):
+        if filename.endswith('.png'):
+            print(f"  - {filename}")
+
+
+def generate_analysis_plots(
+    results: Union[Dict, List[Dict]], 
+    output_dir: str,
+    include_network: bool = False,
+    include_ternary: bool = False
+) -> List[str]:
+    """
+    Generate comprehensive analysis plots from simulation results.
+    
+    Args:
+        results: Simulation results (single dict or list of dicts)
+        output_dir: Directory to save plots
+        include_network: Whether to generate network plots
+        include_ternary: Whether to generate ternary plots
+        
+    Returns:
+        List of generated plot file paths
+    """
+    import os
+    
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Convert single result to list for consistency
+    if isinstance(results, dict):
+        results_list = [results]
+    else:
+        results_list = results
+    
+    generated_plots = []
+    
+    # Extract basic information from first result
+    if not results_list:
+        print("No results provided for plotting")
+        return generated_plots
+    
+    first_result = results_list[0]
+    num_resources = len(first_result.get('final_consumption', []))
+    
+    # 1. Resource distribution plot
+    try:
+        if first_result.get('final_consumption') and first_result.get('capacity'):
+            fig_path = os.path.join(output_dir, 'resource_distribution.png')
+            fig = plot_resource_distribution(
+                consumption=first_result['final_consumption'],
+                capacity=first_result.get('capacity', [1.0] * num_resources),
+                save_path=fig_path
+            )
+            plt.close(fig)
+            generated_plots.append(fig_path)
+            print(f"Resource distribution plot saved: {fig_path}")
+    except Exception as e:
+        print(f"Could not generate resource distribution plot: {e}")
+    
+    print(f"\nGenerated {len(generated_plots)} analysis plots in: {output_dir}")
+    
+    return generated_plots 
