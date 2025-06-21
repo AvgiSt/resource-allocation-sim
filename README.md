@@ -1,6 +1,6 @@
 # Resource Allocation Simulation Framework
 
-A comprehensive multi-agent simulation framework for studying resource allocation dynamics with probability-based learning agents. Designed for researchers investigating distributed resource allocation, game theory, and multi-agent systems.
+A multi-agent simulation framework for studying resource allocation dynamics with probability-based learning agents. Designed for researchers investigating distributed resource allocation, game theory, and multi-agent systems.
 
 ## Table of Contents
 
